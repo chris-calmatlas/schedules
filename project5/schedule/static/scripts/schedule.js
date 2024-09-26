@@ -44,9 +44,8 @@ function memberManager(){
         event.preventDefault()
         // Get selected members
         const memberList = document.querySelector(".memberList")
+        const message = resetMessage(memberList)
         const existingMembers = memberList.querySelectorAll("option")
-        const message = memberList.parentNode.querySelector(".message")
-        message.innerHTML = ""
         const selectedMembers = Array.from(existingMembers).filter(node => node.selected)
         // Only allow one edit
         if(selectedMembers.length > 1){
@@ -104,6 +103,7 @@ function memberManager(){
             // Bring back the name without an edit
             option.hidden = false
             // Revert edit mode
+            memberAddInput.value = ""
             standardButtons.forEach(button => button.disabled = false)
             saveButton.remove()
             cancelButton.remove()
@@ -121,8 +121,7 @@ function memberManager(){
     }
 
     function addMember(inputNode){
-        const message = inputNode.parentNode.querySelector(".message")
-        message.innerHTML = ""
+        const message = resetMessage(inputNode)
         // No blanks
         if(!inputNode.value){
             message.innerHTML = "Type a name to add it to the member list"
@@ -183,4 +182,9 @@ function memberManager(){
         }
         return 0
     }
+}
+
+function resetMessage(node){
+        document.querySelectorAll(".message").forEach(node => node.innerHTML = "")
+        return node.parentNode.querySelector(".message")
 }
