@@ -1,3 +1,47 @@
+
+// Maps day Date.getDay() numbers to day names. Language support can be added here later.
+function getDayName(dayNum){
+    const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+    return dayNames[dayNum]
+}
+
+// Converts date object to YYYY-MM-DD string
+function getHtmlDateValueFormatString(dateObject){
+    // make month double digit
+    const M = dateObject.getMonth() + 1
+    const MM = M < 10 ? '0' + M : M
+    
+    // make day double digit
+    const D = dateObject.getDate()
+    const DD = D < 10 ? '0' + D : D
+    
+    const YYYY = dateObject.getFullYear()
+    return `${YYYY}-${MM}-${DD}`
+}
+
+// Get's date format to present to user. Locale support can be added here.
+// Default is en-US locale with time zone America/Los_Angeles
+function getPrettyDateFormatString(dateObject){
+    return dateObject.toLocaleDateString()
+}
+
+// Return an array of date objects from start to end dates inclusive
+function getArrayOfDates(startDate, endDate){
+    const dateArray = []
+    let currentDate = new Date(startDate)
+    do{
+        dateArray.push(new Date(currentDate.setDate(currentDate.getDate() + 1)))        
+    } while (currentDate <= endDate)
+
+    return dateArray
+}
+
+// Clears message class on the page and returns sibling .message
+function resetMessage(siblingNode){
+    document.querySelectorAll(".message").forEach(node => node.innerHTML = "")
+    return siblingNode.parentNode.querySelector(".message") || console.error("Could not find message container")
+}
+
 document.addEventListener("DOMContentLoaded", () => {
     scheduleBuilder()
     memberManager()
@@ -6,25 +50,76 @@ document.addEventListener("DOMContentLoaded", () => {
 function scheduleBuilder() {
     // listeners
     document.querySelector(".scheduleStart").addEventListener("change", (event) => {
-        validateStartEnd(event.target, document.querySelector(".scheduleEnd"))
+        buildScheduleContainer(event.target, document.querySelector(".scheduleEnd"))
     })
 
     document.querySelector(".scheduleEnd").addEventListener("change", (event) => {
-        validateStartEnd(document.querySelector(".scheduleStart"), event.target)
+        buildScheduleContainer(document.querySelector(".scheduleStart"), event.target)
     })
 
     // functions
-    function validateStartEnd(start, end) {
-        if(!start.value){start.valueAsNumber = Date.now()}
-        if(end.value){
-            if(start.valueAsDate > end.valueAsDate){end.value = start.value}
+    function validateStartEndDates(startInput, endInput) {
+        // end value exists
+        if(endInput.value){
+            // start value also exists
+            if(startInput.value){
+                // Validate and correct
+                if(endInput.value < startInput.value){ 
+                    endInput.value = startInput.value
+                    resetMessage(startInput).innerHTML = "Start date must be before end date"
+                }
+                return true
+            }
         }
-        buildSchedule(start.valueAsDate, end.valueAsDate)
+        return false
     }
 
-    function buildSchedule(startDate, endDate) {
-        const scheduleContainer = document.querySelector(".scheduleContainer")
-        scheduleContainer.innerHTML = startDate.getDay()
+    function buildShiftContainer(dateObject){
+        // Create the elements
+        const shiftContainer = document.createElement('div')
+        const headerNode = document.createElement("h3")
+        const dayNode = document.createElement("div")
+        const dateNode = document.createElement("div")
+        const listContainer = document.createElement("div")
+        const listNode = document.createElement("ul")
+       
+        // Build the structure and nesting
+        shiftContainer.appendChild(headerNode)
+        shiftContainer.appendChild(listContainer)
+        headerNode.appendChild(dayNode)
+        headerNode.appendChild(dateNode)
+        listContainer.appendChild(listNode)
+
+        // Add classes
+        shiftContainer.className = `card shiftContainer ${getDayName(dateObject.getDay())} ${getHtmlDateValueFormatString(dateObject)}`
+        headerNode.className = "card-header"
+        dayNode.className = "scheduleDay card-subtitle"
+        dateNode.className = "scheduleDate card-title"
+        listContainer.className = "card-body"
+        listNode.className = "list-group list-group-flush"
+        
+        // Add innerHTML
+        dayNode.innerHTML = getDayName(dateObject.getDay())
+        dateNode.innerHTML = getPrettyDateFormatString(dateObject)
+
+        return shiftContainer
+    }
+
+    function buildScheduleContainer(startInput, endInput) {
+        const readyToBuild = validateStartEndDates(startInput, endInput)
+        if(readyToBuild){
+            // Get the container
+            const scheduleContainer = document.querySelector(".scheduleContainer")
+            
+            // Get dates within this schedule
+            const dateArray = getArrayOfDates(startInput.valueAsDate, endInput.valueAsDate)
+
+            // Clear the old schedule and add the new
+            scheduleContainer.innerHTML = ""
+            dateArray.forEach((date) => {
+                scheduleContainer.append(buildShiftContainer(date))
+            })
+        }
     }
 }
 
@@ -182,9 +277,4 @@ function memberManager(){
         }
         return 0
     }
-}
-
-function resetMessage(node){
-        document.querySelectorAll(".message").forEach(node => node.innerHTML = "")
-        return node.parentNode.querySelector(".message")
 }

@@ -8,6 +8,7 @@
         <input id="scheduleStart" class="scheduleStart" name="scheduleStart" type="date">
         <label for="scheduleEnd">End Date</label>
         <input id="scheduleEnd" class="scheduleEnd" name="scheduleEnd" type="date">
+        <div class="message"></div>
     </form>
 
     <form class="memberManager m-2">
@@ -16,8 +17,6 @@
             <select id="memberList" class="memberList" multiple>
                 {% for member in members %}
                 {% endfor %}
-                <option value="fred">Fred</option>
-                <option value="frank">Frank</option>
             </select>
             <button class="memberRemoveButton" name="memberRemoveButton">Remove</button>
             <button class="memberEditButton" name="memberEditButton">Edit</button>
