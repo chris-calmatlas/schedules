@@ -1,5 +1,37 @@
 {% extends "schedule/layout.html" %}
+{% load static %}
 
 {% block body %}
-    Hi
+    <h1>Build a Schedule</h1>
+    <form class="scheduleBuilder m-2">
+        <label for="scheduleStart">Start Date</label>
+        <input id="scheduleStart" class="scheduleStart" name="scheduleStart" type="date">
+        <label for="scheduleEnd">End Date</label>
+        <input id="scheduleEnd" class="scheduleEnd" name="scheduleEnd" type="date">
+    </form>
+
+    <form class="memberManager m-2">
+        <div class="form-group">
+            <label for="memberList">Members</label>
+            <select id="memberList" class="memberList" multiple>
+                {% for member in members %}
+                {% endfor %}
+                <option value="fred">Fred</option>
+                <option value="frank">Frank</option>
+            </select>
+            <button class="memberRemoveButton" name="memberRemoveButton">Remove</button>
+            <button class="memberEditButton" name="memberEditButton">Edit</button>
+            <div class="message"></div>
+        </div>
+        <div class="form-group">
+            <div class="message"></div>
+            <label for="memberAdd">New Member</label>
+            <input class="memberAddInput" type="text" name="memberAddInput"></input>
+            <button class="memberAddButton" name="memberAddButton">Add</button>
+        </div>
+    </form>
+
+    <div class="scheduleContainer"></div>
+
+    <script src="{% static 'scripts/schedule.js' %}"></script>
 {% endblock %}

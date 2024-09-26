@@ -25,6 +25,6 @@ urlpatterns = [
     path("accounts/logout/", auth.logout_view, name="logout"),
     path("accounts/register/", auth.register, name="register"),
 
-    path("api/user/", api.newUser, name="newUser"),
-    path("api/user/<str:userId>", api.thisUser, name="thisUser")
+    path("api/schedule/", api.newSchedule, name="newSchedule"),
+    path("api/schedule/<str:scheduleId>", api.thisSchedule, name="thisSchedule")
 ]

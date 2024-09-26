@@ -67,3 +67,6 @@ class LoginUser(forms.Form):
             }
         )
     )
+
+class NewSchedule(forms.Form):
+    name=forms.CharField()
