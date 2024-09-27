@@ -1,40 +1,5 @@
 
-// Maps day Date.getDay() numbers to day names. Language support can be added here later.
-function getDayName(dayNum){
-    const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
-    return dayNames[dayNum]
-}
-
-// Converts date object to YYYY-MM-DD string
-function getHtmlDateValueFormatString(dateObject){
-    // make month double digit
-    const M = dateObject.getMonth() + 1
-    const MM = M < 10 ? '0' + M : M
-    
-    // make day double digit
-    const D = dateObject.getDate()
-    const DD = D < 10 ? '0' + D : D
-    
-    const YYYY = dateObject.getFullYear()
-    return `${YYYY}-${MM}-${DD}`
-}
-
-// Get's date format to present to user. Locale support can be added here.
-// Default is en-US locale with time zone America/Los_Angeles
-function getPrettyDateFormatString(dateObject){
-    return dateObject.toLocaleDateString()
-}
-
-// Return an array of date objects from start to end dates inclusive
-function getArrayOfDates(startDate, endDate){
-    const dateArray = []
-    let currentDate = new Date(startDate)
-    do{
-        dateArray.push(new Date(currentDate.setDate(currentDate.getDate() + 1)))        
-    } while (currentDate <= endDate)
-
-    return dateArray
-}
+import * as dateUtils from "./dateUtils.js"
 
 // Clears message class on the page and returns sibling .message
 function resetMessage(siblingNode){
@@ -91,7 +56,7 @@ function scheduleBuilder() {
         listContainer.appendChild(listNode)
 
         // Add classes
-        shiftContainer.className = `card shiftContainer ${getDayName(dateObject.getDay())} ${getHtmlDateValueFormatString(dateObject)}`
+        shiftContainer.className = `card shiftContainer ${dateUtils.getDayName(dateObject.getDay())} ${dateUtils.getHtmlDateValueFormatString(dateObject)}`
         headerNode.className = "card-header"
         dayNode.className = "scheduleDay card-subtitle"
         dateNode.className = "scheduleDate card-title"
@@ -99,8 +64,8 @@ function scheduleBuilder() {
         listNode.className = "list-group list-group-flush"
         
         // Add innerHTML
-        dayNode.innerHTML = getDayName(dateObject.getDay())
-        dateNode.innerHTML = getPrettyDateFormatString(dateObject)
+        dayNode.innerHTML = dateUtils.getDayName(dateObject.getDay())
+        dateNode.innerHTML = dateUtils.getPrettyDateFormatString(dateObject)
 
         return shiftContainer
     }
@@ -112,7 +77,7 @@ function scheduleBuilder() {
             const scheduleContainer = document.querySelector(".scheduleContainer")
             
             // Get dates within this schedule
-            const dateArray = getArrayOfDates(startInput.valueAsDate, endInput.valueAsDate)
+            const dateArray = dateUtils.getArrayOfDates(startInput.valueAsDate, endInput.valueAsDate)
 
             // Clear the old schedule and add the new
             scheduleContainer.innerHTML = ""
