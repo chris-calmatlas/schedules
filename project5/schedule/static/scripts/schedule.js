@@ -3,8 +3,23 @@ import * as dateUtils from "./dateUtils.js"
 
 // Clears message class on the page and returns sibling .message
 function resetMessage(siblingNode){
-    document.querySelectorAll(".message").forEach(node => node.innerHTML = "")
-    return siblingNode.parentNode.querySelector(".message") || console.error("Could not find message container")
+    try {
+        document.querySelectorAll(".message").forEach(node => node.innerHTML = "")
+        // Find a direct sibling with a .message class
+        let parentNode = siblingNode.parentNode
+        let messageNode = parentNode.querySelector(".message")
+        // If a direct sibling wasn't found loop until one is.
+        while(!messageNode){
+            parentNode = parentNode.parentNode
+            messageNode = parentNode.querySelector(".message")
+        }
+        
+        return messageNode
+    } catch (err) {
+        console.error("Could not find message container")
+        console.error(err)
+        return siblingNode
+    }
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -125,59 +140,61 @@ function memberManager(){
     })
 
     function editMember(option){
-        // Put member in the input and remove from the select
+        // Put member in the input and hide it in the list
         const memberAddInput = document.querySelector(".memberAddInput")
         memberAddInput.value = option.innerHTML
         option.hidden = true
 
         // Get existing buttons
-        const memberList = option.parentNode
-        const standardButtons = memberList.parentNode.querySelectorAll("button")
+        const memberList = document.querySelector(".memberList")
+        const memberControlButtons = document.querySelectorAll(".memberControls button")
         const addButton = document.querySelector(".memberAddButton")
 
         // Create save Button
-        const saveButton = standardButtons[0].cloneNode()
+        const saveButton = memberControlButtons[0].cloneNode()
         saveButton.className = saveButton.className.replace(saveButton.Name, "memberSaveButton")
         saveButton.name = "memberSaveButton"
         saveButton.innerHTML = "Save"
+        
+        // Create cancel Button 
+        const cancelButton = memberControlButtons[0].cloneNode()
+        cancelButton.className = cancelButton.className.replace(cancelButton.Name, "memberCancelButton")
+        cancelButton.name = "memberCancelButton"
+        cancelButton.innerHTML = "Cancel"
+
+        // Hide unneeded buttons, add new ones, and lock the select
+        memberControlButtons.forEach(button => button.disabled = true)
+        memberControlButtons[0].parentNode.appendChild(cancelButton)
+        addButton.parentNode.appendChild(saveButton)
+        addButton.hidden = true
+        memberList.disabled = true
+
+        // button functions
+        function revertEdit(){
+            memberControlButtons.forEach(button => button.disabled = false)
+            saveButton.remove()
+            cancelButton.remove()
+            addButton.hidden = false
+            memberList.disabled = false
+        }
+
+        // new button listeners
         saveButton.addEventListener("click", (event) => {
             event.preventDefault()
             // Make the change
             option.remove()
             addMember(document.querySelector(".memberAddInput"))
-            // Revert edit mode
-            standardButtons.forEach(button => button.disabled = false)
-            saveButton.remove()
-            cancelButton.remove()
-            addButton.hidden = false
-            memberList.disabled = false
+
+            revertEdit()
         })
-        
-        // Create cancel Button 
-        const cancelButton = standardButtons[0].cloneNode()
-        cancelButton.name = "memberCancelButton"
-        cancelButton.innerHTML = "Cancel"
-        cancelButton.className = cancelButton.className.replace(cancelButton.Name, "memberCancelButton")
+
         cancelButton.addEventListener("click", (event) => {
             event.preventDefault()
             // Bring back the name without an edit
             option.hidden = false
-            // Revert edit mode
-            memberAddInput.value = ""
-            standardButtons.forEach(button => button.disabled = false)
-            saveButton.remove()
-            cancelButton.remove()
-            addButton.hidden = false
-            memberList.disabled = false
+            revertEdit()
 
         })
-
-        // Hide unneeded buttons, add new ones, and lock the select
-        standardButtons.forEach(button => button.disabled = true)
-        addButton.parentNode.appendChild(saveButton)
-        addButton.parentNode.appendChild(cancelButton)
-        addButton.hidden = true
-        memberList.disabled = true
     }
 
     function addMember(inputNode){
@@ -215,8 +232,8 @@ function memberManager(){
     }
 
     function cleanInputValue(str){
-        pretty = toTitleCase(removeSymbols(str.trim())),
-        value = pretty.toLowerCase().replace(" ","_")
+        const pretty = toTitleCase(removeSymbols(str.trim()))
+        const value = pretty.toLowerCase().replace(" ","_")
         return {
             "pretty": pretty,
             "value": value
