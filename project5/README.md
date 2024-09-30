@@ -41,11 +41,11 @@ A schedule is a table of days with a defined start and end date with individuals
 - [ ] Allow repeat weekly on day of the week until, or for y weeks
 
 ### Users
-- [ ] No login required: Unauthenticated users should be able to create a schedule. Unauthenticated users should have a save and edit ability as long as their session is cached.
+- [ ] No login required: Unauthenticated users should be able to create a schedule. Unauthenticated users should have a save and edit ability as long as they have local data.
 
-- [ ] Public access read only: Those without a cached session will have read access. Schedules by unauthenticated users are publicly accessible. A warning should be shown explaining this. 
+- [ ] Public access read only: Those without a local data will have read access. Schedules by unauthenticated users are publicly accessible. A warning should be shown explaining this. 
 
-- [ ] Multiple schedules: Authenticated users should have the ability to create mulitple schedules and have write access from any session on schedules they own. 
+- [ ] Multiple schedules: Authenticated users should have the ability to create mulitple schedules and have write access from anywhere on schedules they own.
 
 ### RBAC
 - [ ] Private schedules: Authenticated users should have the ability to mark a schedule private.
