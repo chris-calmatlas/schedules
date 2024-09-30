@@ -30,13 +30,13 @@ export const getNextDate = function(dateObject){
     return new Date(dateObject.setDate(dateObject.getDate() + 1))
 }
 
-// Return an array of date objects from start to end dates inclusive
-export const getArrayOfDates = function(startDate, endDate){
+// Return an array of date objects from start to end date objects inclusive
+export const getArrayOfDates = function(startDateObject, endDateObject){
     const dateArray = []
-    let currentDate = new Date(startDate)
+    let currentDate = new Date(startDateObject)
     do{
         dateArray.push(getNextDate(currentDate))        
-    } while (currentDate <= endDate)
+    } while (currentDate <= endDateObject)
 
     return dateArray
 }

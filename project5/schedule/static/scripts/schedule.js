@@ -22,23 +22,110 @@ function resetMessage(siblingNode){
     }
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-    scheduleBuilder()
-    memberManager()
-})
+function toTitleCase(str){
+    return str.replace(/\w+\s*/g, match => {
+        return match.charAt(0).toUpperCase() + match.substring(1).toLowerCase()
+    })
+}
 
-function scheduleBuilder() {
-    // listeners
-    document.querySelector(".scheduleStart").addEventListener("change", (event) => {
-        buildScheduleContainer(event.target, document.querySelector(".scheduleEnd"))
+function compareNodeValues(a, b){
+    if(a.value < b.value){
+        return -1
+    }
+    if(a.value > b.value){
+        return 1
+    }
+    return 0
+}
+
+function separateNodesIntoRows(nodes, numberOfNodesPerRow){
+    if(!numberOfNodesPerRow || numberOfNodesPerRow > 12){
+        numberOfNodesPerRow = 7
+    } 
+
+    const nodesArray = Array.from(nodes)
+    // splice the container array until there's nothing left. 
+    while(nodesArray.length > 0){
+        // Get the nodes that will go into the row
+        const nodesArraySubset = nodesArray.splice(0, numberOfNodesPerRow)
+
+        // Add shift containers to pad the end.
+        while(nodesArraySubset.length < numberOfNodesPerRow){
+            const newContainer = buildShiftContainer()
+            nodesArraySubset.push(newContainer)
+        }
+
+        // Build the row and append it to the shift containers parent
+        let row = document.createElement("div")
+        row.className = "scheduleRow d-md-flex"
+        nodesArraySubset[0].parentNode.appendChild(row)
+        
+        nodesArraySubset.forEach((node) => {
+            // Add the shift containers to the row
+            row.appendChild(node)
+            node.classList.add("h-100")
+            node.classList.add(`equal-md-width-${numberOfNodesPerRow}`)
+        })
+    }        
+}
+
+function buildShiftContainer(dateObject){
+    // Create the elements
+    const shiftContainer = document.createElement("div")
+    const headerNode = document.createElement("div")
+    const dayNode = document.createElement("h6")
+    const dateNode = document.createElement("h6")
+    const listContainer = document.createElement("div")
+    const listNode = document.createElement("ul")
+   
+    // Build the structure and nesting
+    shiftContainer.appendChild(headerNode)
+    shiftContainer.appendChild(listContainer)
+    headerNode.appendChild(dayNode)
+    headerNode.appendChild(dateNode)
+    listContainer.appendChild(listNode)
+
+    // Add classes
+    shiftContainer.className = `card shiftContainer`
+    headerNode.className = "card-header text-center"
+    dayNode.className = "scheduleDay"
+    dateNode.className = "scheduleDate"
+    listContainer.className = "card-body"
+    listNode.className = "list-group list-group-flush"
+    
+    // Add data if we have it
+    if(dateObject){
+        shiftContainer.dataset.date = dateObject
+        shiftContainer.classList.add(dateUtils.getDayName(dateObject.getDay()))
+        shiftContainer.classList.add(dateUtils.getHtmlDateValueFormatString(dateObject))
+        dayNode.innerHTML = dateUtils.getDayName(dateObject.getDay())
+        dateNode.innerHTML = dateUtils.getPrettyDateFormatString(dateObject)
+    } else {
+       shiftContainer.classList.add("invisible")
+    }
+
+    return shiftContainer
+}
+
+function buildScheduleContainer(startDateObject, endDateObject) {
+    // Get the container
+    const scheduleContainer = document.querySelector(".scheduleContainer")
+    
+    // Get all dates within this schedule
+    const dateArray = dateUtils.getArrayOfDates(startDateObject, endDateObject)
+
+    // Clear the old schedule and add the new
+    scheduleContainer.innerHTML = ""
+    dateArray.forEach((date) => {
+        scheduleContainer.append(buildShiftContainer(date))
     })
 
-    document.querySelector(".scheduleEnd").addEventListener("change", (event) => {
-        buildScheduleContainer(document.querySelector(".scheduleStart"), event.target)
-    })
+    separateNodesIntoRows(document.querySelectorAll(".shiftContainer"))
+}
 
+function datePicker() {
     // functions
-    function validateStartEndDates(startInput, endInput) {
+    function validateStartEndInputs(startInput, endInput) {
         // end value exists
         if(endInput.value){
             // start value also exists
@@ -48,137 +135,78 @@ function scheduleBuilder() {
                     endInput.value = startInput.value
                     resetMessage(startInput).innerHTML = "Start date must be before end date"
                 }
-                return true
+                return {
+                    "startDate": startInput.valueAsDate,
+                    "endDate": endInput.valueAsDate
+                }
             }
         }
-        return false
     }
 
-    function buildShiftContainer(dateObject){
-        // Create the elements
-        const shiftContainer = document.createElement("div")
-        const headerNode = document.createElement("div")
-        const dayNode = document.createElement("h6")
-        const dateNode = document.createElement("h6")
-        const listContainer = document.createElement("div")
-        const listNode = document.createElement("ul")
-       
-        // Build the structure and nesting
-        shiftContainer.appendChild(headerNode)
-        shiftContainer.appendChild(listContainer)
-        headerNode.appendChild(dayNode)
-        headerNode.appendChild(dateNode)
-        listContainer.appendChild(listNode)
-
-        // Add classes
-        shiftContainer.className = `card shiftContainer`
-        headerNode.className = "card-header text-center"
-        dayNode.className = "scheduleDay"
-        dateNode.className = "scheduleDate"
-        listContainer.className = "card-body"
-        listNode.className = "list-group list-group-flush"
-        
-        // Add data if we have it
-        if(dateObject){
-            shiftContainer.dataset.date = dateObject
-            shiftContainer.classList.add(dateUtils.getDayName(dateObject.getDay()))
-            shiftContainer.classList.add(dateUtils.getHtmlDateValueFormatString(dateObject))
-            dayNode.innerHTML = dateUtils.getDayName(dateObject.getDay())
-            dateNode.innerHTML = dateUtils.getPrettyDateFormatString(dateObject)
-        } else {
-           shiftContainer.classList.add("invisible")
+    // listeners
+    document.querySelector(".scheduleStart").addEventListener("change", (event) => {
+        const scheduleBoundaries = validateStartEndInputs(event.target, document.querySelector(".scheduleEnd"))
+        if(scheduleBoundaries){
+            buildScheduleContainer(scheduleBoundaries.startDate, scheduleBoundaries.endDate)
         }
+    })
 
-        return shiftContainer
-    }
-
-    function buildScheduleRows(shiftContainers, numberOfDaysPerRow){
-        // Display the shift containers in rows
-        if(!numberOfDaysPerRow || numberOfDaysPerRow > 12){
-            numberOfDaysPerRow = 7
-        } 
-
-        const shiftContainerArray = Array.from(shiftContainers)
-        // splice the container array until there's nothing left. 
-        while(shiftContainerArray.length > 0){
-            // Get the shiftContainers that will go into the row
-            const shiftContainerSubset = shiftContainerArray.splice(0, numberOfDaysPerRow)
-
-            // Add shift containers to pad the end.
-            while(shiftContainerSubset.length < numberOfDaysPerRow){
-                const newContainer = buildShiftContainer()
-                shiftContainerSubset.push(newContainer)
-            }
-
-            // Build the row and append it to the shift containers parent
-            let row = document.createElement("div")
-            row.className = "scheduleRow d-md-flex"
-            shiftContainerSubset[0].parentNode.appendChild(row)
-            
-            shiftContainerSubset.forEach((shiftContainer) => {
-                // Add the shift containers to the row
-                row.appendChild(shiftContainer)
-                shiftContainer.classList.add("h-100")
-                shiftContainer.classList.add(`equal-md-width-${numberOfDaysPerRow}`)
-            })
-        }        
-    }
-
-    function buildScheduleContainer(startInput, endInput) {
-        const readyToBuild = validateStartEndDates(startInput, endInput)
-        if(readyToBuild){
-            // Get the container
-            const scheduleContainer = document.querySelector(".scheduleContainer")
-            
-            // Get dates within this schedule
-            const dateArray = dateUtils.getArrayOfDates(startInput.valueAsDate, endInput.valueAsDate, true)
-
-            // Clear the old schedule and add the new
-            scheduleContainer.innerHTML = ""
-            dateArray.forEach((date) => {
-                scheduleContainer.append(buildShiftContainer(date))
-            })
-
-            buildScheduleRows(document.querySelectorAll(".shiftContainer"))
+    document.querySelector(".scheduleEnd").addEventListener("change", (event) => {
+        const scheduleBoundaries = validateStartEndInputs(document.querySelector(".scheduleStart"), event.target)
+        if(scheduleBoundaries){
+            buildScheduleContainer(scheduleBoundaries.startDate, scheduleBoundaries.endDate)
         }
-    }
+    })
 }
 
 function memberManager(){
-    // listeners
-    document.querySelector(".memberRemoveButton").addEventListener("click", (event) => {
-        event.preventDefault()
-        // Get selected members and remove
+    // functions
+    function removeSymbolsFromMemberName(str){
+        return str.replace(/[^a-zA-Z0-9 \-_]/g, "")
+    }
+
+    function validateMemberName(str){
+        const pretty = toTitleCase(removeSymbolsFromMemberName(str.trim()))
+        const value = pretty.toLowerCase().replace(" ","_")
+        return {
+            "pretty": pretty,
+            "value": value
+        }
+    }
+
+    function addMember(inputNode){
+        const message = resetMessage(inputNode)
+        // No blanks
+        if(!inputNode.value){
+            message.innerHTML = "Type a name to add it to the member list"
+            return
+        }
+
+        // Cleanup the input value 
+        const cleanValue = validateMemberName(inputNode.value)
+        const newMember = document.createElement("Option")
+        newMember.innerHTML = cleanValue.pretty
+        newMember.value = cleanValue.value
+        
+        // Check for duplicate name
         const memberList = document.querySelector(".memberList")
         const existingMembers = memberList.querySelectorAll("option")
         if(existingMembers){
-            existingMembers.values().forEach(node => node.selected && node.remove())
+            if(existingMembers.values().find(x => x.value === newMember.value)){
+                message.innerHTML = `${cleanValue.pretty} already exists`
+                return
+            }
         }
-    })
-
-    document.querySelector(".memberEditButton").addEventListener("click", (event) => {
-        event.preventDefault()
-        // Get selected members
-        const memberList = document.querySelector(".memberList")
-        const message = resetMessage(memberList)
-        const existingMembers = memberList.querySelectorAll("option")
-        const selectedMembers = Array.from(existingMembers).filter(node => node.selected)
-        // Only allow one edit
-        if(selectedMembers.length > 1){
-            message.innerHTML = "Only one member can be edited at a time"
-            return
-        }
-        if(selectedMembers.length < 1){
-            message.innerHTML = "Select a member to edit"
-            return
-        }
-        editMember(selectedMembers[0])
-    })
-
-    document.querySelector(".memberAddButton").addEventListener("click", (event) => {
-        event.preventDefault()
-        addMember(document.querySelector(".memberAddInput"))
-    })
+        
+        // Add new member to members list
+        memberList.append(newMember)
+        
+        // Sort it and redraw
+        const memberArray = Array.from(memberList).sort(compareNodeValues)
+        memberList.innerHTML = ""
+        memberArray.forEach(node => memberList.appendChild(node))
+        inputNode.value = ""
+    }
 
     function editMember(option){
         // Put member in the input and hide it in the list
@@ -212,6 +240,7 @@ function memberManager(){
 
         // button functions
         function revertEdit(){
+            document.querySelector(".memberAddInput").value = ""
             memberControlButtons.forEach(button => button.disabled = false)
             saveButton.remove()
             cancelButton.remove()
@@ -225,7 +254,6 @@ function memberManager(){
             // Make the change
             option.remove()
             addMember(document.querySelector(".memberAddInput"))
-
             revertEdit()
         })
 
@@ -234,70 +262,50 @@ function memberManager(){
             // Bring back the name without an edit
             option.hidden = false
             revertEdit()
-
         })
     }
 
-    function addMember(inputNode){
-        const message = resetMessage(inputNode)
-        // No blanks
-        if(!inputNode.value){
-            message.innerHTML = "Type a name to add it to the member list"
-            return
-        }
-
-        // Cleanup the input value 
-        const cleanValue = cleanInputValue(inputNode.value)
-        const newMember = document.createElement("Option")
-        newMember.innerHTML = cleanValue.pretty
-        newMember.value = cleanValue.value
-        
-        // Check for duplicate name
+    // listeners
+    document.querySelector(".memberRemoveButton").addEventListener("click", (event) => {
+        event.preventDefault()
+        // Get selected members and remove
         const memberList = document.querySelector(".memberList")
+        const message = resetMessage(memberList)
         const existingMembers = memberList.querySelectorAll("option")
         if(existingMembers){
-            if(existingMembers.values().find(x => x.value === newMember.value)){
-                message.innerHTML = `${cleanValue.pretty} already exists`
-                return
-            }
+            existingMembers.values().forEach(node => {
+                message.innerHTML += `${node.innerHTML} deleted <br />`
+                node.selected && node.remove()
+            })
         }
-        
-        // Add new member to members list
-        memberList.append(newMember)
-        
-        // Sort it and redraw
-        const memberArray = Array.from(memberList).sort(compareNodeValues)
-        memberList.innerHTML = ""
-        memberArray.forEach(node => memberList.appendChild(node))
-        inputNode.value = ""
-    }
+    })
 
-    function cleanInputValue(str){
-        const pretty = toTitleCase(removeSymbols(str.trim()))
-        const value = pretty.toLowerCase().replace(" ","_")
-        return {
-            "pretty": pretty,
-            "value": value
+    document.querySelector(".memberEditButton").addEventListener("click", (event) => {
+        event.preventDefault()
+        // Get selected members
+        const memberList = document.querySelector(".memberList")
+        const message = resetMessage(memberList)
+        const existingMembers = memberList.querySelectorAll("option")
+        const selectedMembers = Array.from(existingMembers).filter(node => node.selected)
+        // Only allow one edit
+        if(selectedMembers.length > 1){
+            message.innerHTML = "Only one member can be edited at a time"
+            return
         }
-    }
+        if(selectedMembers.length < 1){
+            message.innerHTML = "Select a member to edit"
+            return
+        }
+        editMember(selectedMembers[0])
+    })
 
-    function toTitleCase(str){
-        return str.replace(/\w+\s*/g, match => {
-            return match.charAt(0).toUpperCase() + match.substring(1).toLowerCase()
-        })
-    }
-    
-    function removeSymbols(str){
-        return str.replace(/[^a-zA-Z0-9 \-_]/g, "")
-    }
-
-    function compareNodeValues(a, b){
-        if(a.value < b.value){
-            return -1
-        }
-        if(a.value > b.value){
-            return 1
-        }
-        return 0
-    }
+    document.querySelector(".memberAddButton").addEventListener("click", (event) => {
+        event.preventDefault()
+        addMember(document.querySelector(".memberAddInput"))
+    })
 }
+
+document.addEventListener("DOMContentLoaded", () => {
+    datePicker()
+    memberManager()
+})
