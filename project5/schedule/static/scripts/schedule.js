@@ -286,17 +286,17 @@ function memberManager(){
         const memberList = document.querySelector(".memberList")
         const message = resetMessage(memberList)
         const existingMembers = memberList.querySelectorAll("option")
-        const selectedMembers = Array.from(existingMembers).filter(node => node.selected)
+        const selectedMembersArray = Array.from(existingMembers).filter(node => node.selected)
         // Only allow one edit
-        if(selectedMembers.length > 1){
+        if(selectedMembersArray.length > 1){
             message.innerHTML = "Only one member can be edited at a time"
             return
         }
-        if(selectedMembers.length < 1){
+        if(selectedMembersArray.length < 1){
             message.innerHTML = "Select a member to edit"
             return
         }
-        editMember(selectedMembers[0])
+        editMember(selectedMembersArray[0])
     })
 
     document.querySelector(".memberAddButton").addEventListener("click", (event) => {
