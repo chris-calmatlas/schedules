@@ -24,13 +24,20 @@ export const getPrettyDateFormatString = function(dateObject){
     return dateObject.toLocaleDateString()
 }
 
+// Find the "tomorrow" of the given date. 
+// Returns the whole date object not the day of the month
+export const getNextDate = function(dateObject){
+    return new Date(dateObject.setDate(dateObject.getDate() + 1))
+}
+
 // Return an array of date objects from start to end dates inclusive
 export const getArrayOfDates = function(startDate, endDate){
     const dateArray = []
     let currentDate = new Date(startDate)
     do{
-        dateArray.push(new Date(currentDate.setDate(currentDate.getDate() + 1)))        
+        dateArray.push(getNextDate(currentDate))        
     } while (currentDate <= endDate)
 
     return dateArray
 }
+

@@ -2,44 +2,46 @@
 {% load static %}
 
 {% block body %}
-    <h1>Build a Schedule</h1>
-    <div class="container">
-        <form class="row">
-            <div class="scheduleBuilder col-lg-2">
-                <label for="scheduleStart">Start Date</label>
-                <input id="scheduleStart" class="scheduleStart form-control mb-2" name="scheduleStart" type="date" />
-                <label for="scheduleEnd">End Date</label>
-                <input id="scheduleEnd" class="scheduleEnd form-control mb-2" name="scheduleEnd" type="date" />
-            </div>
-
-            <div class="memberManager form-group col-lg d-flex flex-lg-column flex-column-reverse gap-2">
-                <div class="row">
-                    <div class="col-lg-8">
-                        <label for="memberList">Members</label>
-                        <select id="memberList" class="memberList form-select mb-2" multiple>
-                            {% for member in members %}
-                            {% endfor %}
-                        </select>
+    <div class="row">
+        <h1>Build a Schedule</h1>
+        <form class="mb-2">
+            <div class="row">
+                <fieldset class="scheduleBuilder">
+                    <label for="scheduleStart">Start Date</label>
+                    <input id="scheduleStart" class="scheduleStart form-control mb-2" name="scheduleStart" type="date" />
+                    <label for="scheduleEnd">End Date</label>
+                    <input id="scheduleEnd" class="scheduleEnd form-control mb-2" name="scheduleEnd" type="date" />
+                </fieldset>
+    
+                <fieldset class="memberManager d-flex flex-lg-column flex-column-reverse gap-2">
+                    <div class="row">
+                        <div class="">
+                            <label for="memberList">Members</label>
+                            <select id="memberList" class="memberList form-select mb-2" multiple>
+                                {% for member in members %}
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="memberControls d-flex flex-column justify-content-end gap-2">
+                            <button class="memberRemoveButton btn btn-primary" name="memberRemoveButton">Remove</button>
+                            <button class="memberEditButton btn btn-primary" name="memberEditButton">Edit</button>
+                        </div>
                     </div>
-                    <div class="memberControls d-flex flex-column justify-content-end gap-2 col-lg-2">
-                        <button class="memberRemoveButton btn btn-primary" name="memberRemoveButton">Remove</button>
-                        <button class="memberEditButton btn btn-primary" name="memberEditButton">Edit</button>
+                    <div class="row">
+                        <div class="">
+                            <label for="memberAddInput" class="visually-hidden">Add Member</label>
+                            <input id="memberAddInput" class="memberAddInput form-control mb-2" placeholder="Add Member" />
+                        </div>
+                        <div class="d-flex flex-column">
+                            <button class="memberAddButton btn btn-primary" name="memberAddButton">Add</button>
+                        </div>
+                        <div class="message"></div>
                     </div>
-                </div>
-                <div class="row">
-                    <div class="col-lg-8">
-                        <label for="memberAddInput" class="visually-hidden">Add Member</label>
-                        <input id="memberAddInput" class="memberAddInput form-control col-lg-8 mb-2" placeholder="Add Member" />
-                    </div>
-                    <div class="col-lg-2 d-flex flex-column">
-                        <button class="memberAddButton btn btn-primary" name="memberAddButton">Add</button>
-                    </div>
-                    <div class="message"></div>
-                </div>
+                </fieldset>
             </div>
         </form>
-
-        <div class="scheduleContainer row"></div>
+        <div class="scheduleContainer">
+        </div>
     </div>
 
     <script src="{% static 'scripts/schedule.js' %}" type="module"></script>

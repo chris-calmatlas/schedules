@@ -56,10 +56,10 @@ function scheduleBuilder() {
 
     function buildShiftContainer(dateObject){
         // Create the elements
-        const shiftContainer = document.createElement('div')
-        const headerNode = document.createElement("h3")
-        const dayNode = document.createElement("div")
-        const dateNode = document.createElement("div")
+        const shiftContainer = document.createElement("div")
+        const headerNode = document.createElement("div")
+        const dayNode = document.createElement("h6")
+        const dateNode = document.createElement("h6")
         const listContainer = document.createElement("div")
         const listNode = document.createElement("ul")
        
@@ -71,18 +71,57 @@ function scheduleBuilder() {
         listContainer.appendChild(listNode)
 
         // Add classes
-        shiftContainer.className = `card shiftContainer ${dateUtils.getDayName(dateObject.getDay())} ${dateUtils.getHtmlDateValueFormatString(dateObject)}`
-        headerNode.className = "card-header"
-        dayNode.className = "scheduleDay card-subtitle"
-        dateNode.className = "scheduleDate card-title"
+        shiftContainer.className = `card shiftContainer`
+        headerNode.className = "card-header text-center"
+        dayNode.className = "scheduleDay"
+        dateNode.className = "scheduleDate"
         listContainer.className = "card-body"
         listNode.className = "list-group list-group-flush"
         
-        // Add innerHTML
-        dayNode.innerHTML = dateUtils.getDayName(dateObject.getDay())
-        dateNode.innerHTML = dateUtils.getPrettyDateFormatString(dateObject)
+        // Add data if we have it
+        if(dateObject){
+            shiftContainer.dataset.date = dateObject
+            shiftContainer.classList.add(dateUtils.getDayName(dateObject.getDay()))
+            shiftContainer.classList.add(dateUtils.getHtmlDateValueFormatString(dateObject))
+            dayNode.innerHTML = dateUtils.getDayName(dateObject.getDay())
+            dateNode.innerHTML = dateUtils.getPrettyDateFormatString(dateObject)
+        } else {
+           shiftContainer.classList.add("invisible")
+        }
 
         return shiftContainer
+    }
+
+    function buildScheduleRows(shiftContainers, numberOfDaysPerRow){
+        // Display the shift containers in rows
+        if(!numberOfDaysPerRow || numberOfDaysPerRow > 12){
+            numberOfDaysPerRow = 7
+        } 
+
+        const shiftContainerArray = Array.from(shiftContainers)
+        // splice the container array until there's nothing left. 
+        while(shiftContainerArray.length > 0){
+            // Get the shiftContainers that will go into the row
+            const shiftContainerSubset = shiftContainerArray.splice(0, numberOfDaysPerRow)
+
+            // Add shift containers to pad the end.
+            while(shiftContainerSubset.length < numberOfDaysPerRow){
+                const newContainer = buildShiftContainer()
+                shiftContainerSubset.push(newContainer)
+            }
+
+            // Build the row and append it to the shift containers parent
+            let row = document.createElement("div")
+            row.className = "scheduleRow d-md-flex"
+            shiftContainerSubset[0].parentNode.appendChild(row)
+            
+            shiftContainerSubset.forEach((shiftContainer) => {
+                // Add the shift containers to the row
+                row.appendChild(shiftContainer)
+                shiftContainer.classList.add("h-100")
+                shiftContainer.classList.add(`equal-md-width-${numberOfDaysPerRow}`)
+            })
+        }        
     }
 
     function buildScheduleContainer(startInput, endInput) {
@@ -92,13 +131,15 @@ function scheduleBuilder() {
             const scheduleContainer = document.querySelector(".scheduleContainer")
             
             // Get dates within this schedule
-            const dateArray = dateUtils.getArrayOfDates(startInput.valueAsDate, endInput.valueAsDate)
+            const dateArray = dateUtils.getArrayOfDates(startInput.valueAsDate, endInput.valueAsDate, true)
 
             // Clear the old schedule and add the new
             scheduleContainer.innerHTML = ""
             dateArray.forEach((date) => {
                 scheduleContainer.append(buildShiftContainer(date))
             })
+
+            buildScheduleRows(document.querySelectorAll(".shiftContainer"))
         }
     }
 }

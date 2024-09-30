@@ -1,0 +1,61 @@
+/* Corresponds to bootsrap medium */
+@media (min-width: 768px) {
+    .scheduleRow {
+        height: 20em;
+    }
+
+    .scheduleRow h6{
+        font-size: 85%;
+    }
+
+    .equal-md-width-2{
+        width: 50%;
+    }
+
+    .equal-md-width-3{
+        width: 33%;
+    }
+
+    .equal-md-width-4{
+        width: 25%;
+    }
+
+    .equal-md-width-5{
+        width: 20%;
+    }
+
+    .equal-md-width-6{
+        width: 16.667%;
+    }
+
+    .equal-md-width-7{
+        width: 14.286%;
+    }
+
+    .equal-md-width-8{
+        width: 12.5%;
+    }
+
+    .equal-md-width-9{
+        width: 11.112%;
+    }
+
+    .equal-md-width-10{
+        width: 10%;
+    }
+
+    .equal-md-width-11{
+        width: 9.091%;
+    }
+
+    .equal-md-width-12{
+        width: 8.333%;
+    }
+}
+
+/* Corresponds to bootsrap large */
+@media (min-width: 992px){
+    .scheduleRow h6{
+        font-size: 100%;
+    }
+}
