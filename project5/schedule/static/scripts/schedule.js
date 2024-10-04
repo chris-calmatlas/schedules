@@ -22,6 +22,19 @@ function resetMessage(siblingNode){
     }
 }
 
+function saveLocal(key, obj){
+    try{
+        window.localStorage.setItem(key, JSON.stringify(obj))
+    } catch (err) {
+        console.error(`Warning ${key} could not be saved`)
+        console.error(err)
+    }
+}
+
+function restoreLocal(key){
+    return JSON.parse(window.localStorage.getItem(key))
+}
+
 function toTitleCase(str){
     return str.replace(/\w+\s*/g, match => {
         return match.charAt(0).toUpperCase() + match.substring(1).toLowerCase()
@@ -143,20 +156,33 @@ function datePicker() {
         }
     }
 
+    // Get date inputs
+    const dateInputs = {
+        "start": document.querySelector(".scheduleStart"),
+        "end": document.querySelector(".scheduleEnd")
+    }
+
     // listeners
-    document.querySelector(".scheduleStart").addEventListener("change", (event) => {
-        const scheduleBoundaries = validateStartEndInputs(event.target, document.querySelector(".scheduleEnd"))
-        if(scheduleBoundaries){
-            buildScheduleContainer(scheduleBoundaries.startDate, scheduleBoundaries.endDate)
-        }
+    Object.values(dateInputs).forEach((value) => {
+        value.addEventListener("change", () => {
+            const scheduleBoundaries = validateStartEndInputs(dateInputs.start, dateInputs.end)
+            if(scheduleBoundaries){
+                saveLocal("scheduleBoundaries", scheduleBoundaries)
+                buildScheduleContainer(scheduleBoundaries.startDate, scheduleBoundaries.endDate)
+            }
+        })
     })
 
-    document.querySelector(".scheduleEnd").addEventListener("change", (event) => {
-        const scheduleBoundaries = validateStartEndInputs(document.querySelector(".scheduleStart"), event.target)
+    // Populate from local storage
+    const restoredBoundaries = restoreLocal("scheduleBoundaries")
+    if(restoredBoundaries){
+        dateInputs.start.valueAsDate = new Date(restoredBoundaries.startDate)
+        dateInputs.end.valueAsDate = new Date(restoredBoundaries.endDate)
+        const scheduleBoundaries = validateStartEndInputs(dateInputs.start, dateInputs.end)
         if(scheduleBoundaries){
             buildScheduleContainer(scheduleBoundaries.startDate, scheduleBoundaries.endDate)
         }
-    })
+    }
 }
 
 function memberManager(){
@@ -172,6 +198,15 @@ function memberManager(){
             "pretty": pretty,
             "value": value
         }
+    }
+
+    // Build an json like object and save it locally with member info
+    function saveMembers(selectNode){
+        const members = {}
+        selectNode.childNodes.forEach((option) => {
+            members[option.value] = option.innerHTML
+        })
+        saveLocal("members", members)
     }
 
     function addMember(inputNode){
@@ -202,10 +237,13 @@ function memberManager(){
         memberList.append(newMember)
         
         // Sort it and redraw
-        const memberArray = Array.from(memberList).sort(compareNodeValues)
+        const memberListArray = Array.from(memberList).sort(compareNodeValues)
         memberList.innerHTML = ""
-        memberArray.forEach(node => memberList.appendChild(node))
+        memberListArray.forEach(node => memberList.appendChild(node))
         inputNode.value = ""
+
+        // Save locally
+        saveMembers(memberList)
     }
 
     function editMember(option){
@@ -266,18 +304,9 @@ function memberManager(){
     }
 
     // listeners
-    document.querySelector(".memberRemoveButton").addEventListener("click", (event) => {
+    document.querySelector(".memberAddButton").addEventListener("click", (event) => {
         event.preventDefault()
-        // Get selected members and remove
-        const memberList = document.querySelector(".memberList")
-        const message = resetMessage(memberList)
-        const existingMembers = memberList.querySelectorAll("option")
-        if(existingMembers){
-            existingMembers.values().forEach(node => {
-                message.innerHTML += `${node.innerHTML} deleted <br />`
-                node.selected && node.remove()
-            })
-        }
+        addMember(document.querySelector(".memberAddInput"))
     })
 
     document.querySelector(".memberEditButton").addEventListener("click", (event) => {
@@ -299,13 +328,36 @@ function memberManager(){
         editMember(selectedMembersArray[0])
     })
 
-    document.querySelector(".memberAddButton").addEventListener("click", (event) => {
+    document.querySelector(".memberRemoveButton").addEventListener("click", (event) => {
         event.preventDefault()
-        addMember(document.querySelector(".memberAddInput"))
+        // Get selected members and remove
+        const memberList = document.querySelector(".memberList")
+        const message = resetMessage(memberList)
+        const existingMembers = memberList.querySelectorAll("option")
+        if(existingMembers){
+            existingMembers.values().forEach(node => {
+                if(node.selected){
+                    message.innerHTML += `${node.innerHTML} deleted <br />`
+                    node.remove()
+                }
+            })
+        }
+        saveMembers(memberList)
     })
+
+    // Populate from local storage
+    const restoredMembers = restoreLocal("members")
+    if(restoredMembers){
+        const memberAddInput = document.querySelector(".memberAddInput")
+        Object.values(restoredMembers).forEach(memberName => {
+            memberAddInput.value = memberName
+            addMember(memberAddInput)
+        })
+    }
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+    // Setup the page
     datePicker()
     memberManager()
 })
