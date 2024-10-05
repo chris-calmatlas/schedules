@@ -44,7 +44,7 @@ function separateNodesIntoRows(nodes, numberOfNodesPerRow){
         row.className = "scheduleRow d-md-flex"
         nodesArraySubset[0].parentNode.appendChild(row)
         
-        nodesArraySubset.forEach((node) => {
+        nodesArraySubset.forEach(node => {
             // Add the shift containers to the row
             row.appendChild(node)
             node.classList.add("h-100")
@@ -100,7 +100,7 @@ function buildScheduleContainer(startDateObject, endDateObject) {
 
     // Clear the old schedule and add the new
     scheduleContainer.innerHTML = ""
-    dateArray.forEach((date) => {
+    dateArray.forEach(date => {
         scheduleContainer.append(buildShiftContainer(date))
     })
 
@@ -134,7 +134,7 @@ function datePicker() {
     }
 
     // listeners
-    Object.values(dateInputs).forEach((value) => {
+    Object.values(dateInputs).forEach(value => {
         value.addEventListener("change", () => {
             const scheduleBoundaries = validateStartEndInputs(dateInputs.start, dateInputs.end)
             if(scheduleBoundaries){
@@ -175,7 +175,7 @@ function memberManager(){
     // Build an array of member objects from our members select node and save locally
     function saveMemberSelectNode(selectNode){
         const members = []
-        selectNode.querySelectorAll("option").forEach((option) => {
+        selectNode.querySelectorAll("option").forEach(option => {
             members.push({
                 "id": option.value,
                 "name": option.innerHTML
@@ -285,7 +285,7 @@ function memberManager(){
         }
 
         // new button listeners
-        saveButton.addEventListener("click", (event) => {
+        saveButton.addEventListener("click", event => {
             event.preventDefault()
             // Make the change
             option.remove()
@@ -293,7 +293,7 @@ function memberManager(){
             revertEdit()
         })
 
-        cancelButton.addEventListener("click", (event) => {
+        cancelButton.addEventListener("click", event => {
             event.preventDefault()
             // Bring back the name without an edit
             option.hidden = false
@@ -302,12 +302,12 @@ function memberManager(){
     }
 
     // listeners
-    document.querySelector(".memberAddButton").addEventListener("click", (event) => {
+    document.querySelector(".memberAddButton").addEventListener("click", event => {
         event.preventDefault()
         addMemberFromInputNode(document.querySelector(".memberAddInput"))
     })
 
-    document.querySelector(".memberEditButton").addEventListener("click", (event) => {
+    document.querySelector(".memberEditButton").addEventListener("click", event => {
         event.preventDefault()
         // Get selected members
         const memberSelectNode = document.querySelector(".memberList")
@@ -326,7 +326,7 @@ function memberManager(){
         editMemberOption(selectedMembersArray[0])
     })
 
-    document.querySelector(".memberRemoveButton").addEventListener("click", (event) => {
+    document.querySelector(".memberRemoveButton").addEventListener("click", event => {
         event.preventDefault()
         // Get selected members and remove
         const memberSelectNode = document.querySelector(".memberList")
@@ -346,8 +346,8 @@ function memberManager(){
     // Populate from local storage
     const restoredMembers = utils.restoreLocalJson("members")
     if(restoredMembers){
-        restoredMembers.forEach((restoredMembers) => {
-            addMemberById(restoredMembers.id, restoredMembers.name)
+        restoredMembers.forEach(restoredMember => {
+            addMemberById(restoredMember.id, restoredMember.name)
         })
     }
 }
