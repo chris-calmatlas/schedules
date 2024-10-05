@@ -158,29 +158,33 @@ function datePicker() {
 
 function memberManager(){
     // functions
-    function removeSymbolsFromMemberName(str){
-        return str.replace(/[^a-zA-Z0-9 \-_]/g, "")
+
+    // clean memberInput
+    function cleanMemberInput(str){
+        return str.trim().replace(/[^a-zA-Z0-9 \-_]/g, "")
     }
 
-    function validateMemberName(str){
-        const pretty = utils.toTitleCase(removeSymbolsFromMemberName(str.trim()))
-        const value = pretty.toLowerCase().replace(" ","_")
-        return {
-            "pretty": pretty,
-            "value": value
-        }
+    function prettyMemberName(str){
+        return utils.toTitleCase(str)
     }
 
-    // Build an json like object and save it locally with member info
-    function saveMembers(selectNode){
-        const members = {}
-        selectNode.childNodes.forEach((option) => {
-            members[option.value] = option.innerHTML
+    function convertNameToLocalId(str){
+        return str.toLowerCase().replace(" ","_")
+    }
+
+    // Build an array of member objects from our members select node and save locally
+    function saveMemberSelectNode(selectNode){
+        const members = []
+        selectNode.querySelectorAll("option").forEach((option) => {
+            members.push({
+                "id": option.value,
+                "name": option.innerHTML
+            })
         })
         utils.saveLocalJson("members", members)
     }
 
-    function addMember(inputNode){
+    function addMemberFromInputNode(inputNode){
         const message = resetMessage(inputNode)
         // No blanks
         if(!inputNode.value){
@@ -188,53 +192,76 @@ function memberManager(){
             return
         }
 
-        // Cleanup the input value 
-        const cleanValue = validateMemberName(inputNode.value)
-        const newMember = document.createElement("Option")
-        newMember.innerHTML = cleanValue.pretty
-        newMember.value = cleanValue.value
-        
-        // Check for duplicate name
-        const memberList = document.querySelector(".memberList")
-        const existingMembers = memberList.querySelectorAll("option")
-        if(existingMembers){
-            if(existingMembers.values().find(x => x.value === newMember.value)){
-                message.innerHTML = `${cleanValue.pretty} already exists`
-                return
-            }
+        // Cleanup the input value
+        const cleanInput = cleanMemberInput(inputNode.value)
+        const memberName = prettyMemberName(cleanInput)
+        const memberId = convertNameToLocalId(memberName)
+
+        const err = addMemberById(memberId, memberName)
+        if(err){
+            message.innerHTML = err
         }
         
-        // Add new member to members list
-        memberList.append(newMember)
-        
-        // Sort it and redraw
-        const memberListArray = Array.from(memberList).sort(utils.compareNodeValues)
-        memberList.innerHTML = ""
-        memberListArray.forEach(node => memberList.appendChild(node))
-        inputNode.value = ""
-
-        // Save locally
-        saveMembers(memberList)
     }
 
-    function editMember(option){
+    // Todo
+    function getMemberNameFromId(id){
+        return memberId
+    }
+
+    // Add an option to the select node with the member info
+    // return a string message if there is an error
+    function addMemberById(id, str){
+        const memberId = id
+        const memberName = str
+
+        // If a name was given use it, otherwise look it up
+        if(!memberName){
+            memberName = getMemberNameFromId(memberId)
+        }
+        
+        // Check for duplicate in the list
+        const memberSelectNode = document.querySelector(".memberList")
+        const existingMembers = memberSelectNode.querySelectorAll("option")
+        if(existingMembers){
+            if(existingMembers.values().find(x => x.value === memberId)){
+                return `${memberName} already exists`
+            }
+        }
+
+        // Add new member to members list
+        const newMember = document.createElement("Option")
+        newMember.innerHTML = memberName
+        newMember.value = memberId
+        memberSelectNode.appendChild(newMember)
+        
+        // Sort select node and redraw
+        const optionNodeArray = Array.from(memberSelectNode).sort(utils.compareNodeValues)
+        memberSelectNode.innerHTML = ""
+        optionNodeArray.forEach(node => memberSelectNode.appendChild(node))
+
+        // Save locally
+        saveMemberSelectNode(memberSelectNode)
+    }
+
+    function editMemberOption(option){
         // Put member in the input and hide it in the list
         const memberAddInput = document.querySelector(".memberAddInput")
         memberAddInput.value = option.innerHTML
         option.hidden = true
 
         // Get existing buttons
-        const memberList = document.querySelector(".memberList")
+        const memberSelectNode = document.querySelector(".memberList")
         const memberControlButtons = document.querySelectorAll(".memberControls button")
-        const addButton = document.querySelector(".memberAddButton")
+        const memberAddButton = document.querySelector(".memberAddButton")
 
-        // Create save Button
+        // Create save Button. Clone another control button for consistency
         const saveButton = memberControlButtons[0].cloneNode()
         saveButton.className = saveButton.className.replace(saveButton.Name, "memberSaveButton")
         saveButton.name = "memberSaveButton"
         saveButton.innerHTML = "Save"
         
-        // Create cancel Button 
+        // Create cancel Button. Clone another control button for consistency
         const cancelButton = memberControlButtons[0].cloneNode()
         cancelButton.className = cancelButton.className.replace(cancelButton.Name, "memberCancelButton")
         cancelButton.name = "memberCancelButton"
@@ -243,9 +270,9 @@ function memberManager(){
         // Hide unneeded buttons, add new ones, and lock the select
         memberControlButtons.forEach(button => button.disabled = true)
         memberControlButtons[0].parentNode.appendChild(cancelButton)
-        addButton.parentNode.appendChild(saveButton)
-        addButton.hidden = true
-        memberList.disabled = true
+        memberAddButton.parentNode.appendChild(saveButton)
+        memberAddButton.hidden = true
+        memberSelectNode.disabled = true
 
         // button functions
         function revertEdit(){
@@ -253,8 +280,8 @@ function memberManager(){
             memberControlButtons.forEach(button => button.disabled = false)
             saveButton.remove()
             cancelButton.remove()
-            addButton.hidden = false
-            memberList.disabled = false
+            memberAddButton.hidden = false
+            memberSelectNode.disabled = false
         }
 
         // new button listeners
@@ -262,7 +289,7 @@ function memberManager(){
             event.preventDefault()
             // Make the change
             option.remove()
-            addMember(document.querySelector(".memberAddInput"))
+            addMemberFromInputNode(document.querySelector(".memberAddInput"))
             revertEdit()
         })
 
@@ -277,15 +304,15 @@ function memberManager(){
     // listeners
     document.querySelector(".memberAddButton").addEventListener("click", (event) => {
         event.preventDefault()
-        addMember(document.querySelector(".memberAddInput"))
+        addMemberFromInputNode(document.querySelector(".memberAddInput"))
     })
 
     document.querySelector(".memberEditButton").addEventListener("click", (event) => {
         event.preventDefault()
         // Get selected members
-        const memberList = document.querySelector(".memberList")
-        const message = resetMessage(memberList)
-        const existingMembers = memberList.querySelectorAll("option")
+        const memberSelectNode = document.querySelector(".memberList")
+        const message = resetMessage(memberSelectNode)
+        const existingMembers = memberSelectNode.querySelectorAll("option")
         const selectedMembersArray = Array.from(existingMembers).filter(node => node.selected)
         // Only allow one edit
         if(selectedMembersArray.length > 1){
@@ -296,15 +323,15 @@ function memberManager(){
             message.innerHTML = "Select a member to edit"
             return
         }
-        editMember(selectedMembersArray[0])
+        editMemberOption(selectedMembersArray[0])
     })
 
     document.querySelector(".memberRemoveButton").addEventListener("click", (event) => {
         event.preventDefault()
         // Get selected members and remove
-        const memberList = document.querySelector(".memberList")
-        const message = resetMessage(memberList)
-        const existingMembers = memberList.querySelectorAll("option")
+        const memberSelectNode = document.querySelector(".memberList")
+        const message = resetMessage(memberSelectNode)
+        const existingMembers = memberSelectNode.querySelectorAll("option")
         if(existingMembers){
             existingMembers.values().forEach(node => {
                 if(node.selected){
@@ -313,16 +340,14 @@ function memberManager(){
                 }
             })
         }
-        saveMembers(memberList)
+        saveMemberSelectNode(memberSelectNode)
     })
 
     // Populate from local storage
     const restoredMembers = utils.restoreLocalJson("members")
     if(restoredMembers){
-        const memberAddInput = document.querySelector(".memberAddInput")
-        Object.values(restoredMembers).forEach(memberName => {
-            memberAddInput.value = memberName
-            addMember(memberAddInput)
+        restoredMembers.forEach((restoredMembers) => {
+            addMemberById(restoredMembers.id, restoredMembers.name)
         })
     }
 }
