@@ -1,5 +1,5 @@
 
-import * as dateUtils from "./dateUtils.js"
+import * as utils from "./utils.js"
 
 // Clears message class on the page and returns sibling .message
 function resetMessage(siblingNode){
@@ -20,35 +20,6 @@ function resetMessage(siblingNode){
         console.error(err)
         return siblingNode
     }
-}
-
-function saveLocal(key, obj){
-    try{
-        window.localStorage.setItem(key, JSON.stringify(obj))
-    } catch (err) {
-        console.error(`Warning ${key} could not be saved`)
-        console.error(err)
-    }
-}
-
-function restoreLocal(key){
-    return JSON.parse(window.localStorage.getItem(key))
-}
-
-function toTitleCase(str){
-    return str.replace(/\w+\s*/g, match => {
-        return match.charAt(0).toUpperCase() + match.substring(1).toLowerCase()
-    })
-}
-
-function compareNodeValues(a, b){
-    if(a.value < b.value){
-        return -1
-    }
-    if(a.value > b.value){
-        return 1
-    }
-    return 0
 }
 
 function separateNodesIntoRows(nodes, numberOfNodesPerRow){
@@ -109,10 +80,10 @@ function buildShiftContainer(dateObject){
     // Add data if we have it
     if(dateObject){
         shiftContainer.dataset.date = dateObject
-        shiftContainer.classList.add(dateUtils.getDayName(dateObject.getDay()))
-        shiftContainer.classList.add(dateUtils.getHtmlDateValueFormatString(dateObject))
-        dayNode.innerHTML = dateUtils.getDayName(dateObject.getDay())
-        dateNode.innerHTML = dateUtils.getPrettyDateFormatString(dateObject)
+        shiftContainer.classList.add(utils.getDayName(dateObject.getDay()))
+        shiftContainer.classList.add(utils.getHtmlDateValueFormatString(dateObject))
+        dayNode.innerHTML = utils.getDayName(dateObject.getDay())
+        dateNode.innerHTML = utils.getPrettyDateFormatString(dateObject)
     } else {
        shiftContainer.classList.add("invisible")
     }
@@ -125,7 +96,7 @@ function buildScheduleContainer(startDateObject, endDateObject) {
     const scheduleContainer = document.querySelector(".scheduleContainer")
     
     // Get all dates within this schedule
-    const dateArray = dateUtils.getArrayOfDates(startDateObject, endDateObject)
+    const dateArray = utils.getArrayOfDates(startDateObject, endDateObject)
 
     // Clear the old schedule and add the new
     scheduleContainer.innerHTML = ""
@@ -167,14 +138,14 @@ function datePicker() {
         value.addEventListener("change", () => {
             const scheduleBoundaries = validateStartEndInputs(dateInputs.start, dateInputs.end)
             if(scheduleBoundaries){
-                saveLocal("scheduleBoundaries", scheduleBoundaries)
+                utils.saveLocalJson("scheduleBoundaries", scheduleBoundaries)
                 buildScheduleContainer(scheduleBoundaries.startDate, scheduleBoundaries.endDate)
             }
         })
     })
 
     // Populate from local storage
-    const restoredBoundaries = restoreLocal("scheduleBoundaries")
+    const restoredBoundaries = utils.restoreLocalJson("scheduleBoundaries")
     if(restoredBoundaries){
         dateInputs.start.valueAsDate = new Date(restoredBoundaries.startDate)
         dateInputs.end.valueAsDate = new Date(restoredBoundaries.endDate)
@@ -192,7 +163,7 @@ function memberManager(){
     }
 
     function validateMemberName(str){
-        const pretty = toTitleCase(removeSymbolsFromMemberName(str.trim()))
+        const pretty = utils.toTitleCase(removeSymbolsFromMemberName(str.trim()))
         const value = pretty.toLowerCase().replace(" ","_")
         return {
             "pretty": pretty,
@@ -206,7 +177,7 @@ function memberManager(){
         selectNode.childNodes.forEach((option) => {
             members[option.value] = option.innerHTML
         })
-        saveLocal("members", members)
+        utils.saveLocalJson("members", members)
     }
 
     function addMember(inputNode){
@@ -237,7 +208,7 @@ function memberManager(){
         memberList.append(newMember)
         
         // Sort it and redraw
-        const memberListArray = Array.from(memberList).sort(compareNodeValues)
+        const memberListArray = Array.from(memberList).sort(utils.compareNodeValues)
         memberList.innerHTML = ""
         memberListArray.forEach(node => memberList.appendChild(node))
         inputNode.value = ""
@@ -346,7 +317,7 @@ function memberManager(){
     })
 
     // Populate from local storage
-    const restoredMembers = restoreLocal("members")
+    const restoredMembers = utils.restoreLocalJson("members")
     if(restoredMembers){
         const memberAddInput = document.querySelector(".memberAddInput")
         Object.values(restoredMembers).forEach(memberName => {

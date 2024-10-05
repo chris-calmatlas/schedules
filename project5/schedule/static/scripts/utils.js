@@ -41,3 +41,35 @@ export const getArrayOfDates = function(startDateObject, endDateObject){
     return dateArray
 }
 
+// stringify a given object to save localy as json formatted
+export const saveLocalJson = function(key, obj){
+    try{
+        window.localStorage.setItem(key, JSON.stringify(obj))
+    } catch (err) {
+        console.error(`Warning ${key} could not be saved`)
+        console.error(err)
+    }
+}
+
+// parse local storage data as json
+export const restoreLocalJson =  function(key){
+    return JSON.parse(window.localStorage.getItem(key))
+}
+
+// Convert a string to title case "hello world" becomes "Hello World"
+export const toTitleCase = function(str){
+    return str.replace(/\w+\s*/g, match => {
+        return match.charAt(0).toUpperCase() + match.substring(1).toLowerCase()
+    })
+}
+
+// Pass this to the sort function on a nodelist to sort the list by node value.
+export const compareNodeValues = function(a, b){
+    if(a.value < b.value){
+        return -1
+    }
+    if(a.value > b.value){
+        return 1
+    }
+    return 0
+}
