@@ -107,25 +107,29 @@ function buildScheduleContainer(startDateObject, endDateObject) {
     separateNodesIntoRows(document.querySelectorAll(".shiftContainer"))
 }
 
-function datePicker() {
-    // functions
-    function validateStartEndInputs(startInput, endInput) {
-        // end value exists
-        if(endInput.value){
-            // start value also exists
-            if(startInput.value){
-                // Validate and correct
-                if(endInput.value < startInput.value){ 
-                    endInput.value = startInput.value
-                    resetMessage(startInput).innerHTML = "Start date must be before end date"
-                }
-                return {
-                    "startDate": startInput.valueAsDate,
-                    "endDate": endInput.valueAsDate
-                }
+function validateDateBoundaries(startInput, endInput) {
+    // end value exists
+    if(endInput.valueAsDate){
+        // start value also exists
+        if(startInput.valueAsDate){
+            // Validate and correct
+            if(endInput.valueAsDate < startInput.valueAsDate){ 
+                endInput.valueAsDate = startInput.valueAsDate
+                resetMessage(startInput).innerHTML = "Start must be before end"
+            }
+            return {
+                "startDate": startInput.valueAsDate,
+                "endDate": endInput.valueAsDate
             }
         }
+    } else {
+        // since we return early with a start value, we know there is no start value
+        resetMessage(startInput).innerHTML = "Select a start and end time"
     }
+}
+
+function datePicker() {
+    // functions
 
     // Get date inputs
     const dateInputs = {
@@ -136,7 +140,7 @@ function datePicker() {
     // listeners
     Object.values(dateInputs).forEach(value => {
         value.addEventListener("change", () => {
-            const scheduleBoundaries = validateStartEndInputs(dateInputs.start, dateInputs.end)
+            const scheduleBoundaries = validateDateBoundaries(dateInputs.start, dateInputs.end)
             if(scheduleBoundaries){
                 utils.saveLocalJson("scheduleBoundaries", scheduleBoundaries)
                 buildScheduleContainer(scheduleBoundaries.startDate, scheduleBoundaries.endDate)
@@ -149,7 +153,7 @@ function datePicker() {
     if(restoredBoundaries){
         dateInputs.start.valueAsDate = new Date(restoredBoundaries.startDate)
         dateInputs.end.valueAsDate = new Date(restoredBoundaries.endDate)
-        const scheduleBoundaries = validateStartEndInputs(dateInputs.start, dateInputs.end)
+        const scheduleBoundaries = validateDateBoundaries(dateInputs.start, dateInputs.end)
         if(scheduleBoundaries){
             buildScheduleContainer(scheduleBoundaries.startDate, scheduleBoundaries.endDate)
         }
@@ -352,8 +356,50 @@ function memberManager(){
     }
 }
 
+function shiftBuilder(){
+    function saveShiftDivNode(divNode){
+        const shifts = []
+        divNode.querySelectorAll("li").forEach(li => {
+            shifts.push({
+                "id": li.dataset.id,
+                "member": li.querySelector(".memberName"),
+                "startTime": li.querySelector(".startTime").innerHTML,
+                "endTime": li.querySelector(".endTime").innerHTML
+            })
+        })
+    }
+
+    function validateShiftBoundaryInputs(startInput, endInput){
+
+    }
+
+    // listeners
+    document.querySelector(".shiftAddButton").addEventListener("click", event => {
+        // is anyone selected?
+        const memberSelectNode = document.querySelector(".memberList")
+        const message = resetMessage(memberSelectNode)
+        const existingMembers = memberSelectNode.querySelectorAll("option")
+        const selectedMembersArray = Array.from(existingMembers).filter(node => node.selected)
+        if(selectedMembersArray.length < 1){
+            message.innerHTML = "Select a member to create a shift"
+            return
+        }
+    
+        // Validate start and end times
+        const shiftStart = document.querySelector(".shiftStart")
+        const shiftEnd = document.querySelector(".shiftEnd")
+
+        // Shifts are valid within these boundaries
+        const shiftsBoundaries = validateDateBoundaries(shiftStart, shiftEnd)
+        if(!shiftsBoundaries){
+            return
+        }
+    })
+}
+
 document.addEventListener("DOMContentLoaded", () => {
     // Setup the page
     datePicker()
     memberManager()
+    shiftBuilder()
 })

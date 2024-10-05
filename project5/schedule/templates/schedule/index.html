@@ -13,8 +13,8 @@
                     <input id="scheduleEnd" class="scheduleEnd form-control mb-2" name="scheduleEnd" type="date" />
                 </fieldset>
     
-                <fieldset class="memberManager d-flex flex-lg-column flex-column-reverse gap-2">
-                    <div class="row">
+                <fieldset class="memberManager">
+                    <div class="row mb-2">
                         <div class="">
                             <label for="memberList">Members</label>
                             <select id="memberList" class="memberList form-select mb-2" multiple>
@@ -22,20 +22,30 @@
                                 {% endfor %}
                             </select>
                         </div>
-                        <div class="memberControls d-flex flex-column justify-content-end gap-2">
+                        <div class="memberControls d-flex flex-column gap-2">
                             <button class="memberRemoveButton btn btn-primary" name="memberRemoveButton">Remove</button>
                             <button class="memberEditButton btn btn-primary" name="memberEditButton">Edit</button>
                         </div>
                     </div>
-                    <div class="row">
-                        <div class="">
+                    <div class="row mb-2">
+                        <div>
                             <label for="memberAddInput" class="visually-hidden">Add Member</label>
                             <input id="memberAddInput" class="memberAddInput form-control mb-2" placeholder="Add Member" />
                         </div>
                         <div class="d-flex flex-column">
-                            <button class="memberAddButton btn btn-primary" name="memberAddButton">Add</button>
+                            <button class="memberAddButton btn btn-primary" name="memberAddButton">Add Member</button>
                         </div>
                         <div class="message"></div>
+                    </div>
+                </fieldset>
+                <fieldset class="shiftBuilder">
+                    <h3>Shift Builder</h3>
+                    <label for="shiftStart">Start Date</label>
+                    <input id="shiftStart" class="shiftStart form-control mb-2" name="shiftStart" type="date" />
+                    <label for="shiftEnd">End Date</label>
+                    <input id="shiftEnd" class="shiftEnd form-control mb-2" name="shiftEnd" type="date" />
+                    <div class="d-flex flex-column">
+                        <button class="shiftAddButton btn btn-primary" name="shiftAddButton">Add Shift</button>
                     </div>
                 </fieldset>
             </div>
