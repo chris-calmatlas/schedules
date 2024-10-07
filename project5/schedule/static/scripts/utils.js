@@ -1,3 +1,50 @@
+export const getDuration = function(startDateObject, endDateObject){
+    const dateDiff = Math.max(0, endDateObject - startDateObject)
+
+    const epochTimes = {
+        "years": 31536000000,
+        "weeks": 604800000,
+        "days": 86400000,
+        "hours": 3600000,
+        "minutes": 60000,
+        "seconds": 1000
+    }
+
+    const duration = {}
+    duration["total"] = {}
+    duration["part"] = {}
+    duration["whole"] = {}
+    Object.entries(epochTimes).forEach(([key, value]) => {
+        // Get the total without any remainders
+        duration["total"][key] = dateDiff / value
+        duration["whole"][key] = dateDiff % value ? 0 : dateDiff / value
+    })
+
+    Object.entries(epochTimes).reduce((remainder, [key, value]) => {
+        duration["part"][key] = Math.floor(remainder / value)
+        return (remainder % value)
+    }, dateDiff)
+
+    return duration
+}
+
+export const checkDateBoundaries = function(startDateObject, endDateObject){
+    if(startDateObject != null && startDateObject != "Invalid Date"){
+        if(endDateObject != null && endDateObject != "Invalid Date"){
+            return "Start and End"
+        }
+        return "Start Only"
+    }
+    if(endDateObject != null && endDateObject != "Invalid Date"){
+        if(startDateObject != null && startDateObject != "Invalid Date"){
+            return "Start and End"
+        }
+        return "End Only"
+    }
+
+    return "No Dates"
+}
+
 // Maps day Date.getDay() numbers to day names. Language support can be added here later.
 export const getDayName = function(dayNum){
     const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]

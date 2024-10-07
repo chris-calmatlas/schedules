@@ -107,30 +107,81 @@ function buildScheduleContainer(startDateObject, endDateObject) {
     separateNodesIntoRows(document.querySelectorAll(".shiftContainer"))
 }
 
-function validateDateBoundaries(startInput, endInput) {
-    // end value exists
-    if(endInput.valueAsDate){
-        // start value also exists
-        if(startInput.valueAsDate){
-            // Validate and correct
+function normalizeDateInputs(startInput, endInput) {
+    const results = {
+        "Start and End": () => {
             if(endInput.valueAsDate < startInput.valueAsDate){ 
                 endInput.valueAsDate = startInput.valueAsDate
-                resetMessage(startInput).innerHTML = "Start must be before end"
             }
             return {
                 "startDate": startInput.valueAsDate,
                 "endDate": endInput.valueAsDate
             }
+        },
+    
+        "Start Only": () => {
+            endInput.valueAsDate = startInput.valueAsDate
+            return {
+                "startDate": startInput.valueAsDate,
+                "endDate": endInput.valueAsDate
+            }
+        },
+    
+        "End Only": () => {
+            const now = new Date()
+            if(endInput.valueAsDate > now){
+                startInput.valueAsDate = now
+            } else {
+                startInput.valueAsDate = endInput.valueAsDate
+            }
+
+            return {
+                "startDate": startInput.valueAsDate,
+                "endDate": endInput.valueAsDate
+            }
+        }, 
+
+        "No Dates": () => {
+            return
         }
-    } else {
-        // since we return early with a start value, we know there is no start value
-        resetMessage(startInput).innerHTML = "Select a start and end time"
     }
+
+    const boundaryCheck = utils.checkDateBoundaries(startInput.valueAsDate, endInput.valueAsDate)
+    return results[boundaryCheck]()
 }
 
-function datePicker() {
-    // functions
+function normalizeTimeInputs(startInput, endInput) {
+    const results = {
+        "Start and End": () => {
+            return {
+                "startTime": new Date(startInput.valueAsNumber),
+                "endTime": new Date(endInput.valueAsNumber)
+            }
+        },
+    
+        "Start Only": () => {
+            // Add an hour
+            endInput.valueAsNumber = startInput.valueAsNumber + 3600000
+            return {
+                "startTime": new Date(startInput.valueAsNumber),
+                "endTime": new Date(endInput.valueAsNumber)
+            }
+        },
+    
+        "End Only": () => {
+            return
+        }, 
 
+        "No Dates": () => {
+            return
+        }
+    }
+
+    const boundaryCheck = utils.checkDateBoundaries(new Date(startInput.valueAsNumber), new Date(endInput.valueAsNumber))
+    return results[boundaryCheck]()
+}
+
+function scheduleDatePicker() {
     // Get date inputs
     const dateInputs = {
         "start": document.querySelector(".scheduleStart"),
@@ -140,7 +191,7 @@ function datePicker() {
     // listeners
     Object.values(dateInputs).forEach(value => {
         value.addEventListener("change", () => {
-            const scheduleBoundaries = validateDateBoundaries(dateInputs.start, dateInputs.end)
+            const scheduleBoundaries = normalizeDateInputs(dateInputs.start, dateInputs.end)
             if(scheduleBoundaries){
                 utils.saveLocalJson("scheduleBoundaries", scheduleBoundaries)
                 buildScheduleContainer(scheduleBoundaries.startDate, scheduleBoundaries.endDate)
@@ -153,7 +204,7 @@ function datePicker() {
     if(restoredBoundaries){
         dateInputs.start.valueAsDate = new Date(restoredBoundaries.startDate)
         dateInputs.end.valueAsDate = new Date(restoredBoundaries.endDate)
-        const scheduleBoundaries = validateDateBoundaries(dateInputs.start, dateInputs.end)
+        const scheduleBoundaries = normalizeDateInputs(dateInputs.start, dateInputs.end)
         if(scheduleBoundaries){
             buildScheduleContainer(scheduleBoundaries.startDate, scheduleBoundaries.endDate)
         }
@@ -161,8 +212,6 @@ function datePicker() {
 }
 
 function memberManager(){
-    // functions
-
     // clean memberInput
     function cleanMemberInput(str){
         return str.trim().replace(/[^a-zA-Z0-9 \-_]/g, "")
@@ -306,6 +355,21 @@ function memberManager(){
     }
 
     // listeners
+    document.querySelector(".memberList").addEventListener("change", event => {
+        const shiftBuilderInfo = document.querySelector(".shiftBuilder .selectedMembers")
+        if(event.target.selectedOptions.length != 0){
+            const selectedOptions = Array.from(event.target.selectedOptions)
+            shiftBuilderInfo.innerHTML = ""
+            selectedOptions.forEach(option => {
+                const li = document.createElement("li")
+                li.innerHTML = option.innerHTML
+                shiftBuilderInfo.appendChild(li)
+            })
+        } else {
+            shiftBuilderInfo.innerHTML = "No members selected"
+        }
+    })
+
     document.querySelector(".memberAddButton").addEventListener("click", event => {
         event.preventDefault()
         addMemberFromInputNode(document.querySelector(".memberAddInput"))
@@ -369,37 +433,74 @@ function shiftBuilder(){
         })
     }
 
-    function validateShiftBoundaryInputs(startInput, endInput){
+    function validateShiftBoundaryInputs(dayInputs, timeInputs){
+        // Set shift days before checking times.
+        const dayBoundaries = normalizeDateInputs(dayInputs.start, dayInputs.end)
+        if(dayBoundaries){
+            const timeBoundaries = normalizeTimeInputs(timeInputs.start, timeInputs.end)
+            if(timeBoundaries){
+                // Add a day if we need to
+                if(dayBoundaries.startDate.getTime() == dayBoundaries.endDate.getTime()){
+                    if(timeBoundaries.endTime.getTime() <= timeBoundaries.startTime.getTime()){
+                        dayInputs.end.valueAsDate = utils.getNextDate(dayInputs.end.valueAsDate)
+                        dayBoundaries.endDate = dayInputs.end.valueAsDate
+                    }
+                }
+                return{
+                    "start": new Date(timeBoundaries.startTime.getTime() + dayBoundaries.startDate.getTime()),
+                    "end": new Date(timeBoundaries.endTime.getTime() + dayBoundaries.endDate.getTime())
+                } 
+            }
+        }
+    }
 
+    function displayShiftLength(shiftBoundaries){
+        const shiftLengthContainer = document.querySelector(".shiftLength")
+        const shiftLength = utils.getDuration(shiftBoundaries.start, shiftBoundaries.end).part
+        const duration = {
+            weeks: shiftLength.weeks,
+            days: shiftLength.days,
+            hours: shiftLength.hours,
+            minutes: shiftLength.minutes
+        }
+        shiftLengthContainer.innerHTML = new Intl.DurationFormat().format(duration)
+    }
+
+    // Get day inputs
+    const dayInputs = {
+        "start": document.querySelector(".shiftStartDay"),
+        "end": document.querySelector(".shiftEndDay")
+    }
+
+    // Get time inputs
+    const timeInputs = {
+        "start": document.querySelector(".shiftStartTime"),
+        "end": document.querySelector(".shiftEndTime")
     }
 
     // listeners
-    document.querySelector(".shiftAddButton").addEventListener("click", event => {
-        // is anyone selected?
-        const memberSelectNode = document.querySelector(".memberList")
-        const message = resetMessage(memberSelectNode)
-        const existingMembers = memberSelectNode.querySelectorAll("option")
-        const selectedMembersArray = Array.from(existingMembers).filter(node => node.selected)
-        if(selectedMembersArray.length < 1){
-            message.innerHTML = "Select a member to create a shift"
-            return
-        }
-    
-        // Validate start and end times
-        const shiftStart = document.querySelector(".shiftStart")
-        const shiftEnd = document.querySelector(".shiftEnd")
+    document.querySelectorAll(".dateTimeInputs input").forEach(input => {
+        input.addEventListener("change", () => {
+            const shiftBoundaries = validateShiftBoundaryInputs(dayInputs, timeInputs)
+            if(shiftBoundaries){
+                displayShiftLength(shiftBoundaries)
+            }
+        })
+    })
 
-        // Shifts are valid within these boundaries
-        const shiftsBoundaries = validateDateBoundaries(shiftStart, shiftEnd)
-        if(!shiftsBoundaries){
-            return
-        }
+    document.querySelector(".shiftAddButton").addEventListener("click", event => {
+        event.preventDefault()
     })
 }
 
 document.addEventListener("DOMContentLoaded", () => {
     // Setup the page
-    datePicker()
+    document.querySelector(".clearLocalStorage").addEventListener("click", () => {
+        window.localStorage.clear()
+        window.location.reload()
+
+    })
+    scheduleDatePicker()
     memberManager()
     shiftBuilder()
 })

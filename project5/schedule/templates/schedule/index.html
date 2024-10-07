@@ -4,6 +4,7 @@
 {% block body %}
     <div class="row">
         <h1>Build a Schedule</h1>
+        <button class="clearLocalStorage">reset</button>
         <form class="mb-2">
             <div class="row">
                 <fieldset class="scheduleBuilder">
@@ -40,10 +41,20 @@
                 </fieldset>
                 <fieldset class="shiftBuilder">
                     <h3>Shift Builder</h3>
-                    <label for="shiftStart">Start Date</label>
-                    <input id="shiftStart" class="shiftStart form-control mb-2" name="shiftStart" type="date" />
-                    <label for="shiftEnd">End Date</label>
-                    <input id="shiftEnd" class="shiftEnd form-control mb-2" name="shiftEnd" type="date" />
+                    <div class="dateTimeInputs">
+                        <label for="shiftStartDay">Start Day</label>
+                        <input id="shiftStartDay" class="shiftStartDay form-control mb-2" name="shiftStartDay" type="date" />
+                        <label for="shiftEndDay">End Day</label>
+                        <input id="shiftEndDay" class="shiftEndDay form-control mb-2" name="shiftEndDay" type="date" />
+                        <label for="shiftStartTime">Start Time</label>
+                        <input id="shiftStartTime" class="shiftStartTime form-control mb-2" name="shiftStartTime" type="time" />
+                        <label for="shiftEndTime">End Time</label>
+                        <input id="shiftEndTime" class="shiftEndTime form-control mb-2" name="shiftEndTime" type="time" />
+                    </div>
+                        <h6>Selected Member</h6>
+                    <ul class="selectedMembers">No members selected</ul>
+                    <h6>Shift Length</h6>
+                    <div class="shiftLength">None</div>
                     <div class="d-flex flex-column">
                         <button class="shiftAddButton btn btn-primary" name="shiftAddButton">Add Shift</button>
                     </div>
