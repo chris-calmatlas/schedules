@@ -110,66 +110,39 @@ function buildScheduleContainer(startDateObject, endDateObject) {
 function normalizeDateInputs(startInput, endInput) {
     const results = {
         "Start and End": () => {
-            if(endInput.valueAsDate < startInput.valueAsDate){ 
-                endInput.valueAsDate = startInput.valueAsDate
+            if(endInput.valueAsNumber < startInput.valueAsNumber){ 
+                endInput.valueAsNumber = startInput.valueAsNumber
             }
             return {
-                "startDate": startInput.valueAsDate,
-                "endDate": endInput.valueAsDate
+                "startDate": startInput.valueAsNumber,
+                "endDate": endInput.valueAsNumber
             }
         },
     
         "Start Only": () => {
-            endInput.valueAsDate = startInput.valueAsDate
+            endInput.valueAsNumber = startInput.valueAsNumber
             return {
-                "startDate": startInput.valueAsDate,
-                "endDate": endInput.valueAsDate
+                "startDate": startInput.valueAsNumber,
+                "endDate": endInput.valueAsNumber
             }
         },
     
         "End Only": () => {
             const now = new Date()
-            if(endInput.valueAsDate > now){
-                startInput.valueAsDate = now
+            if(endInput.valueAsNumber > now){
+                now.setHours(new Date(endInput.valueAsNumber).getHours())
+                now.setMinutes(new Date(endInput.valueAsNumber).getMinutes())
+                now.setSeconds(0)
+                now.setMilliseconds(0)
+                startInput.valueAsNumber = now
             } else {
-                startInput.valueAsDate = endInput.valueAsDate
+                startInput.valueAsNumber = endInput.valueAsNumber
             }
 
             return {
-                "startDate": startInput.valueAsDate,
-                "endDate": endInput.valueAsDate
+                "startDate": startInput.valueAsNumber,
+                "endDate": endInput.valueAsNumber
             }
-        }, 
-
-        "No Dates": () => {
-            return
-        }
-    }
-
-    const boundaryCheck = utils.checkDateBoundaries(startInput.valueAsDate, endInput.valueAsDate)
-    return results[boundaryCheck]()
-}
-
-function normalizeTimeInputs(startInput, endInput) {
-    const results = {
-        "Start and End": () => {
-            return {
-                "startTime": new Date(startInput.valueAsNumber),
-                "endTime": new Date(endInput.valueAsNumber)
-            }
-        },
-    
-        "Start Only": () => {
-            // Add an hour
-            endInput.valueAsNumber = startInput.valueAsNumber + 3600000
-            return {
-                "startTime": new Date(startInput.valueAsNumber),
-                "endTime": new Date(endInput.valueAsNumber)
-            }
-        },
-    
-        "End Only": () => {
-            return
         }, 
 
         "No Dates": () => {
@@ -433,27 +406,6 @@ function shiftBuilder(){
         })
     }
 
-    function validateShiftBoundaryInputs(dayInputs, timeInputs){
-        // Set shift days before checking times.
-        const dayBoundaries = normalizeDateInputs(dayInputs.start, dayInputs.end)
-        if(dayBoundaries){
-            const timeBoundaries = normalizeTimeInputs(timeInputs.start, timeInputs.end)
-            if(timeBoundaries){
-                // Add a day if we need to
-                if(dayBoundaries.startDate.getTime() == dayBoundaries.endDate.getTime()){
-                    if(timeBoundaries.endTime.getTime() <= timeBoundaries.startTime.getTime()){
-                        dayInputs.end.valueAsDate = utils.getNextDate(dayInputs.end.valueAsDate)
-                        dayBoundaries.endDate = dayInputs.end.valueAsDate
-                    }
-                }
-                return{
-                    "start": new Date(timeBoundaries.startTime.getTime() + dayBoundaries.startDate.getTime()),
-                    "end": new Date(timeBoundaries.endTime.getTime() + dayBoundaries.endDate.getTime())
-                } 
-            }
-        }
-    }
-
     function displayShiftLength(shiftBoundaries){
         const shiftLengthContainer = document.querySelector(".shiftLength")
         const shiftLength = utils.getDuration(shiftBoundaries.start, shiftBoundaries.end).part
@@ -466,22 +418,16 @@ function shiftBuilder(){
         shiftLengthContainer.innerHTML = new Intl.DurationFormat().format(duration)
     }
 
-    // Get day inputs
-    const dayInputs = {
-        "start": document.querySelector(".shiftStartDay"),
-        "end": document.querySelector(".shiftEndDay")
-    }
-
     // Get time inputs
-    const timeInputs = {
-        "start": document.querySelector(".shiftStartTime"),
-        "end": document.querySelector(".shiftEndTime")
+    const dateTimeInputs = {
+        "start": document.querySelector(".shiftStart"),
+        "end": document.querySelector(".shiftEnd")
     }
 
     // listeners
     document.querySelectorAll(".dateTimeInputs input").forEach(input => {
         input.addEventListener("change", () => {
-            const shiftBoundaries = validateShiftBoundaryInputs(dayInputs, timeInputs)
+            const shiftBoundaries = normalizeDateInputs(dateTimeInputs.start, dateTimeInputs.end)
             if(shiftBoundaries){
                 displayShiftLength(shiftBoundaries)
             }
