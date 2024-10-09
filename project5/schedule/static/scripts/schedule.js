@@ -81,7 +81,7 @@ function buildShiftContainer(dateObject){
     if(dateObject){
         shiftContainer.dataset.date = dateObject
         shiftContainer.classList.add(utils.getDayName(dateObject.getDay()))
-        shiftContainer.classList.add(utils.getHtmlDateValueFormatString(dateObject))
+        shiftContainer.classList.add(utils.getISODateString(dateObject))
         dayNode.innerHTML = utils.getDayName(dateObject.getDay())
         dateNode.innerHTML = utils.getPrettyDateFormatString(dateObject)
     } else {
@@ -108,11 +108,16 @@ function buildScheduleContainer(startDateObject, endDateObject) {
 }
 
 function normalizeDateInputs(startInput, endInput) {
+    // Max 1 year
+    const maxSpan = 31536000000
     const results = {
         "Start and End": () => {
             if(endInput.valueAsNumber < startInput.valueAsNumber){ 
                 endInput.valueAsNumber = startInput.valueAsNumber
             }
+            endInput.min = utils.getISODateString(new Date(startInput.valueAsNumber))
+            endInput.max = utils.getISODateString(new Date(startInput.valueAsNumber + maxSpan))
+            startInput.min = utils.getISODateString(new Date(endInput.valueAsNumber - maxSpan))
             return {
                 "startDate": startInput.valueAsNumber,
                 "endDate": endInput.valueAsNumber
@@ -121,6 +126,9 @@ function normalizeDateInputs(startInput, endInput) {
     
         "Start Only": () => {
             endInput.valueAsNumber = startInput.valueAsNumber
+            endInput.min = utils.getISODateString(new Date(startInput.valueAsNumber))
+            endInput.max = utils.getISODateString(new Date(startInput.valueAsNumber + maxSpan))
+
             return {
                 "startDate": startInput.valueAsNumber,
                 "endDate": endInput.valueAsNumber
@@ -134,11 +142,16 @@ function normalizeDateInputs(startInput, endInput) {
                 now.setMinutes(new Date(endInput.valueAsNumber).getMinutes())
                 now.setSeconds(0)
                 now.setMilliseconds(0)
-                startInput.valueAsNumber = now
+                if (endInput.valueAsNumber - maxSpan > now.getTime()){
+                    startInput.valueAsNumber = endInput.valueAsNumber - maxSpan
+                    startInput.min = utils.getISODateString(new Date(endInput.valueAsNumber - maxSpan))
+                } else {
+                    startInput.valueAsNumber = now
+                }
             } else {
                 startInput.valueAsNumber = endInput.valueAsNumber
             }
-
+            startInput.min = utils.getISODateString(new Date(endInput.valueAsNumber - maxSpan))
             return {
                 "startDate": startInput.valueAsNumber,
                 "endDate": endInput.valueAsNumber
@@ -424,11 +437,29 @@ function shiftBuilder(){
         "end": document.querySelector(".shiftEnd")
     }
 
+    function validateShiftBoundaries(shiftBoundaries){
+        // Get schedule start and end
+        const scheduleStart = document.querySelector(".scheduleStart").valueAsNumber
+        const scheduleEnd = document.querySelector(".scheduleEnd").valueAsNumber
+
+        if(shiftBoundaries.start < scheduleStart){
+            return false
+        }
+
+        if(shiftBoundaries.end > scheduleEnd){
+            return false
+        }
+
+        return true
+
+    }
+
     // listeners
     document.querySelectorAll(".dateTimeInputs input").forEach(input => {
         input.addEventListener("change", () => {
             const shiftBoundaries = normalizeDateInputs(dateTimeInputs.start, dateTimeInputs.end)
-            if(shiftBoundaries){
+            const validShiftBoundaries = validateShiftBoundaries(shiftBoundaries)
+            if(validShiftBoundaries){
                 displayShiftLength(shiftBoundaries)
             }
         })

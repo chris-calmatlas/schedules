@@ -52,17 +52,8 @@ export const getDayName = function(dayNum){
 }
 
 // Converts date object to YYYY-MM-DD string
-export const getHtmlDateValueFormatString = function(dateObject){
-    // make month double digit
-    const M = dateObject.getMonth() + 1
-    const MM = M < 10 ? '0' + M : M
-    
-    // make day double digit
-    const D = dateObject.getDate()
-    const DD = D < 10 ? '0' + D : D
-    
-    const YYYY = dateObject.getFullYear()
-    return `${YYYY}-${MM}-${DD}`
+export const getISODateString = function(dateObject){
+    return dateObject.toISOString().split("T")[0]
 }
 
 // Get's date format to present to user. Locale support can be added here.
