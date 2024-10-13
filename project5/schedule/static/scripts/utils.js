@@ -56,6 +56,11 @@ export const getISODateString = function(dateObject){
     return dateObject.toISOString().split("T")[0]
 }
 
+// Converts date object to YYYY-MM-DDTHH:mm string
+export const getISODateTimeString = function(dateObject){
+    return dateObject.toISOString().slice(0, -8)
+}
+
 // Get's date format to present to user. Locale support can be added here.
 // Default is en-US locale with time zone America/Los_Angeles
 export const getPrettyDateFormatString = function(dateObject){

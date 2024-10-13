@@ -22,12 +22,12 @@ function resetMessage(siblingNode){
     }
 }
 
-function separateNodesIntoRows(nodes, numberOfNodesPerRow){
+function arrangeScheduleIntoRows(nodelist, numberOfNodesPerRow){
     if(!numberOfNodesPerRow || numberOfNodesPerRow > 12){
         numberOfNodesPerRow = 7
     } 
 
-    const nodesArray = Array.from(nodes)
+    const nodesArray = Array.from(nodelist)
     // splice the container array until there's nothing left. 
     while(nodesArray.length > 0){
         // Get the nodes that will go into the row
@@ -35,7 +35,7 @@ function separateNodesIntoRows(nodes, numberOfNodesPerRow){
 
         // Add shift containers to pad the end.
         while(nodesArraySubset.length < numberOfNodesPerRow){
-            const newContainer = buildShiftContainer()
+            const newContainer = shiftContainer()
             nodesArraySubset.push(newContainer)
         }
 
@@ -53,7 +53,7 @@ function separateNodesIntoRows(nodes, numberOfNodesPerRow){
     }        
 }
 
-function buildShiftContainer(dateObject){
+function shiftContainer(dateObject){
     // Create the elements
     const shiftContainer = document.createElement("div")
     const headerNode = document.createElement("div")
@@ -87,84 +87,123 @@ function buildShiftContainer(dateObject){
     } else {
        shiftContainer.classList.add("invisible")
     }
-
     return shiftContainer
 }
 
-function buildScheduleContainer(startDateObject, endDateObject) {
+function fillScheduleContainer(scheduleBoundaries) {
     // Get the container
     const scheduleContainer = document.querySelector(".scheduleContainer")
     
     // Get all dates within this schedule
-    const dateArray = utils.getArrayOfDates(startDateObject, endDateObject)
+    const dateArray = utils.getArrayOfDates(scheduleBoundaries.start, scheduleBoundaries.end)
 
     // Clear the old schedule and add the new
     scheduleContainer.innerHTML = ""
     dateArray.forEach(date => {
-        scheduleContainer.append(buildShiftContainer(date))
+        scheduleContainer.append(shiftContainer(date))
     })
 
-    separateNodesIntoRows(document.querySelectorAll(".shiftContainer"))
+    arrangeScheduleIntoRows(document.querySelectorAll(".shiftContainer"))
+    enableShiftBuilder(scheduleBoundaries)
 }
 
-function normalizeDateInputs(startInput, endInput) {
+function normalizeScheduleBoundaries(dateInputs) {
+    const startDate = dateInputs.start.valueAsDate
+    const endDate = dateInputs.end.valueAsDate
+    const startInput = dateInputs.start
+    const endInput = dateInputs.end
+
     // Max 1 year
     const maxSpan = 31536000000
-    const results = {
-        "Start and End": () => {
-            if(endInput.valueAsNumber < startInput.valueAsNumber){ 
-                endInput.valueAsNumber = startInput.valueAsNumber
-            }
-            endInput.min = utils.getISODateString(new Date(startInput.valueAsNumber))
-            endInput.max = utils.getISODateString(new Date(startInput.valueAsNumber + maxSpan))
-            startInput.min = utils.getISODateString(new Date(endInput.valueAsNumber - maxSpan))
-            return {
-                "startDate": startInput.valueAsNumber,
-                "endDate": endInput.valueAsNumber
-            }
-        },
-    
-        "Start Only": () => {
-            endInput.valueAsNumber = startInput.valueAsNumber
-            endInput.min = utils.getISODateString(new Date(startInput.valueAsNumber))
-            endInput.max = utils.getISODateString(new Date(startInput.valueAsNumber + maxSpan))
-
-            return {
-                "startDate": startInput.valueAsNumber,
-                "endDate": endInput.valueAsNumber
-            }
-        },
-    
-        "End Only": () => {
-            const now = new Date()
-            if(endInput.valueAsNumber > now){
-                now.setHours(new Date(endInput.valueAsNumber).getHours())
-                now.setMinutes(new Date(endInput.valueAsNumber).getMinutes())
-                now.setSeconds(0)
-                now.setMilliseconds(0)
-                if (endInput.valueAsNumber - maxSpan > now.getTime()){
-                    startInput.valueAsNumber = endInput.valueAsNumber - maxSpan
-                    startInput.min = utils.getISODateString(new Date(endInput.valueAsNumber - maxSpan))
-                } else {
-                    startInput.valueAsNumber = now
-                }
+    if(startDate){
+        endInput.min = utils.getISODateString(startDate)
+        endInput.max = utils.getISODateString(new Date(startDate.getTime() + maxSpan))
+        // start and end
+        if(endDate < startDate){
+            endInput.valueAsDate = startDate
+        }
+    } else if (endDate){
+        const now = new Date()
+        // An end date in the future with no start date should set the start date to today
+        if(endDate > now){
+            now.setHours(new Date(endDate).getHours())
+            now.setMinutes(new Date(endDate).getMinutes())
+            now.setSeconds(0)
+            now.setMilliseconds(0)
+            // Don't allow end date to be further than maxSpan from start date
+            if (endDate.getTime() - maxSpan > now.getTime()){
+                startInput.valueAsDate = new Date(endDate.getTime() - maxSpan)
+                startInput.min = utils.getISODateString(endDate.getTime() - maxSpan)
             } else {
-                startInput.valueAsNumber = endInput.valueAsNumber
+                startInput.valueAsDate = now
             }
-            startInput.min = utils.getISODateString(new Date(endInput.valueAsNumber - maxSpan))
-            return {
-                "startDate": startInput.valueAsNumber,
-                "endDate": endInput.valueAsNumber
-            }
-        }, 
+        } else {
+            // End date is in the past, if we get here there is no start date
+            // Set the start date to the end date
+            startInput.valueAsDate = endDate
+        }
+    } else {
+        endInput.removeAttribute("min")
+        endInput.removeAttribute("max")
+        startInput.removeAttribute("min")
+    }
 
-        "No Dates": () => {
-            return
+    return {
+        "start": startInput.valueAsDate,
+        "end": endInput.valueAsDate
+    }
+}
+
+// Build an array of member objects from our members select node and save locally
+function saveMemberSelectNode(selectNode){
+    const members = []
+    selectNode.querySelectorAll("option").forEach(option => {
+        members.push({
+            "id": option.value,
+            "name": option.innerHTML
+        })
+    })
+    utils.saveLocalJson("members", members)
+}
+
+// Todo
+function getMemberNameFromId(id){
+    return memberId
+}
+
+// Add an option to the select node with the member info
+// return a string message if there is an error
+function addMemberById(id, str){
+    const memberId = id
+    const memberName = str
+
+    // If a name was given use it, otherwise look it up
+    if(!memberName){
+        memberName = getMemberNameFromId(memberId)
+    }
+    
+    // Check for duplicate in the list
+    const memberSelectNode = document.querySelector(".memberList")
+    const existingMembers = memberSelectNode.querySelectorAll("option")
+    if(existingMembers){
+        if(existingMembers.values().find(x => x.value === memberId)){
+            return `${memberName} already exists`
         }
     }
 
-    const boundaryCheck = utils.checkDateBoundaries(new Date(startInput.valueAsNumber), new Date(endInput.valueAsNumber))
-    return results[boundaryCheck]()
+    // Add new member to members list
+    const newMember = document.createElement("Option")
+    newMember.innerHTML = memberName
+    newMember.value = memberId
+    memberSelectNode.appendChild(newMember)
+    
+    // Sort select node and redraw
+    const optionNodeArray = Array.from(memberSelectNode).sort(utils.compareNodeValues)
+    memberSelectNode.innerHTML = ""
+    optionNodeArray.forEach(node => memberSelectNode.appendChild(node))
+
+    // Save locally
+    saveMemberSelectNode(memberSelectNode)
 }
 
 function scheduleDatePicker() {
@@ -177,24 +216,13 @@ function scheduleDatePicker() {
     // listeners
     Object.values(dateInputs).forEach(value => {
         value.addEventListener("change", () => {
-            const scheduleBoundaries = normalizeDateInputs(dateInputs.start, dateInputs.end)
+            const scheduleBoundaries = normalizeScheduleBoundaries(dateInputs)
             if(scheduleBoundaries){
                 utils.saveLocalJson("scheduleBoundaries", scheduleBoundaries)
-                buildScheduleContainer(scheduleBoundaries.startDate, scheduleBoundaries.endDate)
+                fillScheduleContainer(scheduleBoundaries)
             }
         })
     })
-
-    // Populate from local storage
-    const restoredBoundaries = utils.restoreLocalJson("scheduleBoundaries")
-    if(restoredBoundaries){
-        dateInputs.start.valueAsDate = new Date(restoredBoundaries.startDate)
-        dateInputs.end.valueAsDate = new Date(restoredBoundaries.endDate)
-        const scheduleBoundaries = normalizeDateInputs(dateInputs.start, dateInputs.end)
-        if(scheduleBoundaries){
-            buildScheduleContainer(scheduleBoundaries.startDate, scheduleBoundaries.endDate)
-        }
-    }
 }
 
 function memberManager(){
@@ -209,18 +237,6 @@ function memberManager(){
 
     function convertNameToLocalId(str){
         return str.toLowerCase().replace(" ","_")
-    }
-
-    // Build an array of member objects from our members select node and save locally
-    function saveMemberSelectNode(selectNode){
-        const members = []
-        selectNode.querySelectorAll("option").forEach(option => {
-            members.push({
-                "id": option.value,
-                "name": option.innerHTML
-            })
-        })
-        utils.saveLocalJson("members", members)
     }
 
     function addMemberFromInputNode(inputNode){
@@ -240,47 +256,6 @@ function memberManager(){
         if(err){
             message.innerHTML = err
         }
-        
-    }
-
-    // Todo
-    function getMemberNameFromId(id){
-        return memberId
-    }
-
-    // Add an option to the select node with the member info
-    // return a string message if there is an error
-    function addMemberById(id, str){
-        const memberId = id
-        const memberName = str
-
-        // If a name was given use it, otherwise look it up
-        if(!memberName){
-            memberName = getMemberNameFromId(memberId)
-        }
-        
-        // Check for duplicate in the list
-        const memberSelectNode = document.querySelector(".memberList")
-        const existingMembers = memberSelectNode.querySelectorAll("option")
-        if(existingMembers){
-            if(existingMembers.values().find(x => x.value === memberId)){
-                return `${memberName} already exists`
-            }
-        }
-
-        // Add new member to members list
-        const newMember = document.createElement("Option")
-        newMember.innerHTML = memberName
-        newMember.value = memberId
-        memberSelectNode.appendChild(newMember)
-        
-        // Sort select node and redraw
-        const optionNodeArray = Array.from(memberSelectNode).sort(utils.compareNodeValues)
-        memberSelectNode.innerHTML = ""
-        optionNodeArray.forEach(node => memberSelectNode.appendChild(node))
-
-        // Save locally
-        saveMemberSelectNode(memberSelectNode)
     }
 
     function editMemberOption(option){
@@ -396,13 +371,20 @@ function memberManager(){
         }
         saveMemberSelectNode(memberSelectNode)
     })
+}
 
-    // Populate from local storage
-    const restoredMembers = utils.restoreLocalJson("members")
-    if(restoredMembers){
-        restoredMembers.forEach(restoredMember => {
-            addMemberById(restoredMember.id, restoredMember.name)
-        })
+function enableShiftBuilder(scheduleBoundaries){
+    if(scheduleBoundaries){
+        // Get time inputs
+        const dateTimeInputs = {
+            "start": document.querySelector(".shiftStart"),
+            "end": document.querySelector(".shiftEnd")
+        }
+        dateTimeInputs.start.min = utils.getISODateTimeString(scheduleBoundaries.start)
+        dateTimeInputs.end.min = utils.getISODateTimeString(scheduleBoundaries.start)
+        dateTimeInputs.start.max = utils.getISODateTimeString(scheduleBoundaries.end)
+        dateTimeInputs.end.max = utils.getISODateTimeString(scheduleBoundaries.end)
+        document.querySelector(".shiftBuilder").disabled = false
     }
 }
 
@@ -420,15 +402,17 @@ function shiftBuilder(){
     }
 
     function displayShiftLength(shiftBoundaries){
-        const shiftLengthContainer = document.querySelector(".shiftLength")
-        const shiftLength = utils.getDuration(shiftBoundaries.start, shiftBoundaries.end).part
-        const duration = {
-            weeks: shiftLength.weeks,
-            days: shiftLength.days,
-            hours: shiftLength.hours,
-            minutes: shiftLength.minutes
-        }
-        shiftLengthContainer.innerHTML = new Intl.DurationFormat().format(duration)
+        if (shiftBoundaries){
+            const shiftLengthContainer = document.querySelector(".shiftLength")
+            const shiftLength = utils.getDuration(shiftBoundaries.start, shiftBoundaries.end).part
+            const duration = {
+                weeks: shiftLength.weeks,
+                days: shiftLength.days,
+                hours: shiftLength.hours,
+                minutes: shiftLength.minutes
+            }
+            shiftLengthContainer.innerHTML = new Intl.DurationFormat().format(duration)
+        }        
     }
 
     // Get time inputs
@@ -437,31 +421,48 @@ function shiftBuilder(){
         "end": document.querySelector(".shiftEnd")
     }
 
-    function validateShiftBoundaries(shiftBoundaries){
-        // Get schedule start and end
-        const scheduleStart = document.querySelector(".scheduleStart").valueAsNumber
-        const scheduleEnd = document.querySelector(".scheduleEnd").valueAsNumber
+    function normalizeShiftBoundaries(dateTimeInputs){
+        const startInput = dateTimeInputs.start
+        const endInput = dateTimeInputs.end
 
-        if(shiftBoundaries.start < scheduleStart){
-            return false
+        const scheduleInputs = {
+            "start": document.querySelector(".scheduleStart"),
+            "end": document.querySelector(".scheduleEnd")
+        }
+        const scheduleBoundaries = normalizeScheduleBoundaries(scheduleInputs)
+
+        if(startInput.valueAsNumber){
+            if(startInput.valueAsNumber < scheduleBoundaries.start){
+                startInput.valueAsNumber = scheduleBoundaries.start.getTime()
+            }
+            if(startInput.valueAsNumber > scheduleBoundaries.end){
+                startInput.valueAsNumber = scheduleBoundaries.end.getTime()
+            }
+            // start and end
+            if(endInput.valueAsNumber < startInput.valueAsNumber){
+                endInput.valueAsNumber = startInput.valueAsNumber
+            }
+        } else if (endInput.valueAsNumber){
+            // An end time with no start time should set the start time to the schedule start
+            if(endInput.valueAsNumber > scheduleBoundaries.start){
+                console.log("here")
+                startInput.valueAsNumber = scheduleBoundaries.start.getTime()
+            } else {
+                endInput.valueAsNumber = scheduleBoundaries.start.getTime()
+                startInput.valueAsNumber = scheduleBoundaries.start.getTime()
+            }
         }
 
-        if(shiftBoundaries.end > scheduleEnd){
-            return false
+        return {
+            "start": startInput.valueAsNumber,
+            "end": endInput.valueAsNumber
         }
-
-        return true
-
     }
 
-    // listeners
     document.querySelectorAll(".dateTimeInputs input").forEach(input => {
         input.addEventListener("change", () => {
-            const shiftBoundaries = normalizeDateInputs(dateTimeInputs.start, dateTimeInputs.end)
-            const validShiftBoundaries = validateShiftBoundaries(shiftBoundaries)
-            if(validShiftBoundaries){
-                displayShiftLength(shiftBoundaries)
-            }
+            const shiftBoundaries = normalizeShiftBoundaries(dateTimeInputs)
+            displayShiftLength(shiftBoundaries)
         })
     })
 
@@ -470,8 +471,32 @@ function shiftBuilder(){
     })
 }
 
+function restoreFromLocalStorage(){
+    // Populate from local storage
+    const restoredBoundaries = utils.restoreLocalJson("scheduleBoundaries")
+    if(restoredBoundaries){
+        const dateInputs = {
+            "start": document.querySelector(".scheduleStart"),
+            "end": document.querySelector(".scheduleEnd")
+        }
+        dateInputs.start.valueAsDate = new Date(restoredBoundaries.start)
+        dateInputs.end.valueAsDate = new Date(restoredBoundaries.end)
+        const scheduleBoundaries = normalizeScheduleBoundaries(dateInputs)
+        if(scheduleBoundaries){
+            fillScheduleContainer(scheduleBoundaries)
+        }
+    }
+
+    // Populate from local storage
+    const restoredMembers = utils.restoreLocalJson("members")
+    if(restoredMembers){
+        restoredMembers.forEach(restoredMember => {
+            addMemberById(restoredMember.id, restoredMember.name)
+        })
+    }
+}
+
 document.addEventListener("DOMContentLoaded", () => {
-    // Setup the page
     document.querySelector(".clearLocalStorage").addEventListener("click", () => {
         window.localStorage.clear()
         window.location.reload()
@@ -480,4 +505,5 @@ document.addEventListener("DOMContentLoaded", () => {
     scheduleDatePicker()
     memberManager()
     shiftBuilder()
+    restoreFromLocalStorage()
 })
