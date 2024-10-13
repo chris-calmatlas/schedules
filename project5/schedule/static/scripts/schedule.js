@@ -108,10 +108,10 @@ function fillScheduleContainer(scheduleBoundaries) {
 }
 
 function normalizeScheduleBoundaries(dateInputs) {
-    const startDate = dateInputs.start.valueAsDate
-    const endDate = dateInputs.end.valueAsDate
     const startInput = dateInputs.start
     const endInput = dateInputs.end
+    const startDate = startInput.valueAsDate
+    const endDate = endInput.valueAsDate
 
     // Max 1 year
     const maxSpan = 31536000000
@@ -147,10 +147,10 @@ function normalizeScheduleBoundaries(dateInputs) {
         endInput.removeAttribute("max")
         startInput.removeAttribute("min")
     }
-
+    
     return {
         "start": startInput.valueAsDate,
-        "end": endInput.valueAsDate
+        "end": utils.getLastMinuteOfDay(endInput.valueAsDate)
     }
 }
 
@@ -432,10 +432,10 @@ function shiftBuilder(){
         const scheduleBoundaries = normalizeScheduleBoundaries(scheduleInputs)
 
         if(startInput.valueAsNumber){
-            if(startInput.valueAsNumber < scheduleBoundaries.start){
+            if(startInput.valueAsNumber < scheduleBoundaries.start.getTime()){
                 startInput.valueAsNumber = scheduleBoundaries.start.getTime()
             }
-            if(startInput.valueAsNumber > scheduleBoundaries.end){
+            if(startInput.valueAsNumber > scheduleBoundaries.end.getTime()){
                 startInput.valueAsNumber = scheduleBoundaries.end.getTime()
             }
             // start and end
@@ -445,7 +445,6 @@ function shiftBuilder(){
         } else if (endInput.valueAsNumber){
             // An end time with no start time should set the start time to the schedule start
             if(endInput.valueAsNumber > scheduleBoundaries.start){
-                console.log("here")
                 startInput.valueAsNumber = scheduleBoundaries.start.getTime()
             } else {
                 endInput.valueAsNumber = scheduleBoundaries.start.getTime()

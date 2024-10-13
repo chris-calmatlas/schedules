@@ -28,6 +28,10 @@ export const getDuration = function(startDateObject, endDateObject){
     return duration
 }
 
+export const getLastMinuteOfDay = function(dateObject){
+    return new Date(dateObject.getTime() + 86399000)
+}
+
 export const checkDateBoundaries = function(startDateObject, endDateObject){
     if(startDateObject != null && startDateObject != "Invalid Date"){
         if(endDateObject != null && endDateObject != "Invalid Date"){
