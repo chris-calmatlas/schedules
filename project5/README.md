@@ -33,9 +33,9 @@ These set of requirements include javascript editing of single page applications
 
 ### Schedule
 A schedule is a table of days with a defined start and end date with individuals occupying hours within those days.
-- [ ] Max 20 people per schedule
-- [ ] Max 1 year long
-- [ ] Add a list of people/workers 
+- [x] Max 20 people per schedule
+- [x] Max 1 year long
+- [x] Add a list of people/workers 
 - [ ] Click on a day to add a workers scheduled time
 - [ ] Allow repeat every x number of days until, or for y occurrences
 - [ ] Allow repeat weekly on day of the week until, or for y weeks

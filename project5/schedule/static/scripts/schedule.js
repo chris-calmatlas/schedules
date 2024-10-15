@@ -191,6 +191,12 @@ function addMemberById(id, str){
         }
     }
 
+    // Set max members
+    const maxMembers = 4
+    if(existingMembers.length >= maxMembers){
+        return `Max ${maxMembers} members. Delete one to add another.`
+    }
+
     // Add new member to members list
     const newMember = document.createElement("Option")
     newMember.innerHTML = memberName
