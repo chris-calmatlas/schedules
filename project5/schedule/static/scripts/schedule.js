@@ -105,6 +105,40 @@ function fillScheduleContainer(scheduleBoundaries) {
 
     arrangeScheduleIntoRows(document.querySelectorAll(".shiftContainer"))
     enableShiftBuilder(scheduleBoundaries)
+
+    // listeners
+    scheduleContainer.querySelectorAll(".shiftContainer").forEach(shiftContainer => {
+        shiftContainer.addEventListener("click", event => {
+            // Highlight the div
+            const thisShiftContainer = event.target.closest(".shiftContainer")
+            const date = utils.getISODateString(new Date(thisShiftContainer.dataset.date))
+            thisShiftContainer.classList.toggle("border-success")
+
+            // Add or remove from selected dates section
+            const selectedDatesContainer = document.querySelector(".selectedDates")
+            const emptySpan = selectedDatesContainer.querySelector("span")
+            let li = selectedDatesContainer.querySelector(`.date-${date}`)
+            if(li) {
+                li.remove()
+            } else {
+                emptySpan.hidden = true
+                li = document.createElement("li")
+                li.classList.add(`date-${date}`)
+                li.innerHTML = thisShiftContainer.dataset.date
+                document.querySelector(".selectedDates").appendChild(li)
+            }
+
+            // Sort
+            const selectedDates = selectedDatesContainer.querySelectorAll("li")
+            if(selectedDates.length == 0){
+                emptySpan.hidden = false
+            } else {
+                const selectedDatesArray = Array.from(selectedDates).sort(utils.compareNodeClassName)
+                selectedDatesArray.forEach(node => selectedDatesContainer.appendChild(node))
+            }
+            
+        })
+    })
 }
 
 function normalizeScheduleBoundaries(dateInputs) {
@@ -205,7 +239,6 @@ function addMemberById(id, str){
     
     // Sort select node and redraw
     const optionNodeArray = Array.from(memberSelectNode).sort(utils.compareNodeValues)
-    memberSelectNode.innerHTML = ""
     optionNodeArray.forEach(node => memberSelectNode.appendChild(node))
 
     // Save locally
@@ -323,17 +356,17 @@ function memberManager(){
 
     // listeners
     document.querySelector(".memberList").addEventListener("change", event => {
-        const shiftBuilderInfo = document.querySelector(".shiftBuilder .selectedMembers")
+        const selectedMembersContainer = document.querySelector(".shiftBuilder .selectedMembers")
         if(event.target.selectedOptions.length != 0){
             const selectedOptions = Array.from(event.target.selectedOptions)
-            shiftBuilderInfo.innerHTML = ""
+            selectedMembersContainer.innerHTML = ""
             selectedOptions.forEach(option => {
                 const li = document.createElement("li")
                 li.innerHTML = option.innerHTML
-                shiftBuilderInfo.appendChild(li)
+                selectedMembersContainer.appendChild(li)
             })
         } else {
-            shiftBuilderInfo.innerHTML = "No members selected"
+            selectedMembersContainer.innerHTML = "No members selected"
         }
     })
 

@@ -120,3 +120,14 @@ export const compareNodeValues = function(a, b){
     }
     return 0
 }
+
+// Pass this to the sort function on a nodelist to sort the list by node class.
+export const compareNodeClassName = function(a, b){
+    if(a.className < b.className){
+        return -1
+    }
+    if(a.className > b.className){
+        return 1
+    }
+    return 0
+}
