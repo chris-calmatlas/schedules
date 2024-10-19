@@ -115,7 +115,7 @@ function fillScheduleContainer(scheduleBoundaries) {
             thisShiftContainer.classList.toggle("border-success")
 
             // Add or remove from selected dates section
-            const selectedDatesContainer = document.querySelector(".selectedDates")
+            const selectedDatesContainer = document.querySelector(".shiftInfo .selectedDates")
             const emptySpan = selectedDatesContainer.querySelector("span")
             let li = selectedDatesContainer.querySelector(`.date-${date}`)
             if(li) {
@@ -125,7 +125,7 @@ function fillScheduleContainer(scheduleBoundaries) {
                 li = document.createElement("li")
                 li.classList.add(`date-${date}`)
                 li.innerHTML = thisShiftContainer.dataset.date
-                document.querySelector(".selectedDates").appendChild(li)
+                document.querySelector(".shiftInfo .selectedDates").appendChild(li)
             }
 
             // Sort
@@ -356,11 +356,12 @@ function memberManager(){
 
     // listeners
     document.querySelector(".memberList").addEventListener("change", event => {
-        const selectedMembersContainer = document.querySelector(".shiftBuilder .selectedMembers")
-        if(event.target.selectedOptions.length != 0){
-            const selectedOptions = Array.from(event.target.selectedOptions)
+        const selectedOptions = event.target.selectedOptions
+        const selectedMembersContainer = document.querySelector(".shiftInfo .selectedMembers")
+        if(selectedOptions.length != 0){
+            const selectedOptionsArray = Array.from(selectedOptions)
             selectedMembersContainer.innerHTML = ""
-            selectedOptions.forEach(option => {
+            selectedOptionsArray.forEach(option => {
                 const li = document.createElement("li")
                 li.innerHTML = option.innerHTML
                 selectedMembersContainer.appendChild(li)
@@ -506,6 +507,18 @@ function shiftBuilder(){
 
     document.querySelector(".shiftAddButton").addEventListener("click", event => {
         event.preventDefault()
+        const dateTimeInputs = {
+            "start": document.querySelector(".shiftStart"),
+            "end": document.querySelector(".shiftEnd")
+        }
+        // Get shift boundaries
+        const shiftBoundaries = normalizeShiftBoundaries(dateTimeInputs)
+        // Get members
+        const selectedMembers = Array.from(document.querySelectorAll(".memberList option")).filter(option => option.selected)
+        console.log(selectedMembers)
+
+        // Get selected dates
+        
     })
 }
 
