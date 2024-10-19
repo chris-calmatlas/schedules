@@ -57,16 +57,24 @@ export const getDayName = function(dayNum){
 
 // Converts date object to YYYY-MM-DD string
 export const getISODateString = function(dateObject){
+    return dateObject.toISOString().split("T")[0]
+}
+
+export const getLocalISODateString = function(dateObject){
     const tzoffset = dateObject.getTimezoneOffset() * 60000 //offset in milliseconds
-    const localDate = (new Date(Date.now() - tzoffset))
+    const localDate = (new Date(dateObject - tzoffset))
     return localDate.toISOString().split("T")[0]
 }
 
 // Converts date object to YYYY-MM-DDTHH:mm string
-export const getISODateTimeString = function(dateObject){
+export const getLocalISODateTimeString = function(dateObject){
     const tzoffset = dateObject.getTimezoneOffset() * 60000 //offset in milliseconds
-    const localDateTime = (new Date(Date.now() - tzoffset))
+    const localDateTime = (new Date(dateObject - tzoffset))
     return localDateTime.toISOString().slice(0, -8)
+}
+
+export const getISODateTimeString = function(dateObject){
+    return dateObject.toISOString().slice(0, -8)
 }
 
 // Get's date format to present to user. Locale support can be added here.

@@ -81,7 +81,7 @@ function shiftContainer(dateObject){
     if(dateObject){
         shiftContainer.dataset.date = dateObject
         shiftContainer.classList.add(utils.getDayName(dateObject.getDay()))
-        shiftContainer.classList.add(`Date-${utils.getISODateString(dateObject)}`)
+        shiftContainer.classList.add(`Date-${utils.getLocalISODateString(dateObject)}`)
         dayNode.innerHTML = utils.getDayName(dateObject.getDay())
         dateNode.innerHTML = utils.getPrettyDateFormatString(dateObject)
     } else {
@@ -256,6 +256,7 @@ function memberManager(){
         const cleanInput = cleanMemberInput(inputNode.value)
         const memberName = prettyMemberName(cleanInput)
         const memberId = convertNameToLocalId(memberName)
+        inputNode.value = ""
 
         const err = addMemberById(memberId, memberName)
         if(err){
@@ -481,7 +482,6 @@ function shiftBuilder(){
         const shiftBoundaries = normalizeShiftBoundaries(dateTimeInputs)
         // Get members
         const selectedMemberOptions = Array.from(document.querySelectorAll(".memberList option")).filter(option => option.selected)
-        
         // Get shift containers
         const startShiftContainer = document.querySelector(`.shiftContainer.Date-${utils.getISODateString(new Date(shiftBoundaries.start))}`)
         const endShiftContainer = document.querySelector(`.shiftContainer.Date-${utils.getISODateString(new Date(shiftBoundaries.end))}`)
@@ -490,9 +490,8 @@ function shiftBuilder(){
             const shift = document.createElement("div")
             shift.className = `shift ${option.value}`
             shift.innerHTML = option.innerHTML
-            console.log(shift)
             startShiftContainer.appendChild(shift)
-            if(endShiftContainer){
+            if(endShiftContainer != startShiftContainer){
                 endShiftContainer.appendChild(shift)
             }
         })
