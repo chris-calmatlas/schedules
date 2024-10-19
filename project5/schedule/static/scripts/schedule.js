@@ -81,7 +81,7 @@ function shiftContainer(dateObject){
     if(dateObject){
         shiftContainer.dataset.date = dateObject
         shiftContainer.classList.add(utils.getDayName(dateObject.getDay()))
-        shiftContainer.classList.add(utils.getISODateString(dateObject))
+        shiftContainer.classList.add(`Date-${utils.getISODateString(dateObject)}`)
         dayNode.innerHTML = utils.getDayName(dateObject.getDay())
         dateNode.innerHTML = utils.getPrettyDateFormatString(dateObject)
     } else {
@@ -105,40 +105,6 @@ function fillScheduleContainer(scheduleBoundaries) {
 
     arrangeScheduleIntoRows(document.querySelectorAll(".shiftContainer"))
     enableShiftBuilder(scheduleBoundaries)
-
-    // listeners
-    scheduleContainer.querySelectorAll(".shiftContainer").forEach(shiftContainer => {
-        shiftContainer.addEventListener("click", event => {
-            // Highlight the div
-            const thisShiftContainer = event.target.closest(".shiftContainer")
-            const date = utils.getISODateString(new Date(thisShiftContainer.dataset.date))
-            thisShiftContainer.classList.toggle("border-success")
-
-            // Add or remove from selected dates section
-            const selectedDatesContainer = document.querySelector(".shiftInfo .selectedDates")
-            const emptySpan = selectedDatesContainer.querySelector("span")
-            let li = selectedDatesContainer.querySelector(`.date-${date}`)
-            if(li) {
-                li.remove()
-            } else {
-                emptySpan.hidden = true
-                li = document.createElement("li")
-                li.classList.add(`date-${date}`)
-                li.innerHTML = thisShiftContainer.dataset.date
-                document.querySelector(".shiftInfo .selectedDates").appendChild(li)
-            }
-
-            // Sort
-            const selectedDates = selectedDatesContainer.querySelectorAll("li")
-            if(selectedDates.length == 0){
-                emptySpan.hidden = false
-            } else {
-                const selectedDatesArray = Array.from(selectedDates).sort(utils.compareNodeClassName)
-                selectedDatesArray.forEach(node => selectedDatesContainer.appendChild(node))
-            }
-            
-        })
-    })
 }
 
 function normalizeScheduleBoundaries(dateInputs) {
@@ -514,10 +480,22 @@ function shiftBuilder(){
         // Get shift boundaries
         const shiftBoundaries = normalizeShiftBoundaries(dateTimeInputs)
         // Get members
-        const selectedMembers = Array.from(document.querySelectorAll(".memberList option")).filter(option => option.selected)
-        console.log(selectedMembers)
+        const selectedMemberOptions = Array.from(document.querySelectorAll(".memberList option")).filter(option => option.selected)
+        
+        // Get shift containers
+        const startShiftContainer = document.querySelector(`.shiftContainer.Date-${utils.getISODateString(new Date(shiftBoundaries.start))}`)
+        const endShiftContainer = document.querySelector(`.shiftContainer.Date-${utils.getISODateString(new Date(shiftBoundaries.end))}`)
 
-        // Get selected dates
+        selectedMemberOptions.forEach(option => {
+            const shift = document.createElement("div")
+            shift.className = `shift ${option.value}`
+            shift.innerHTML = option.innerHTML
+            console.log(shift)
+            startShiftContainer.appendChild(shift)
+            if(endShiftContainer){
+                endShiftContainer.appendChild(shift)
+            }
+        })
         
     })
 }
