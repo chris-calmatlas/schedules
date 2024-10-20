@@ -460,8 +460,8 @@ function shiftBuilder(){
         }
 
         return {
-            "start": startInput.valueAsNumber,
-            "end": endInput.valueAsNumber
+            "start": new Date(startInput.valueAsNumber),
+            "end": new Date(endInput.valueAsNumber)
         }
     }
 
@@ -483,8 +483,8 @@ function shiftBuilder(){
         // Get members
         const selectedMemberOptions = Array.from(document.querySelectorAll(".memberList option")).filter(option => option.selected)
         // Get shift containers
-        const startShiftContainer = document.querySelector(`.shiftContainer.Date-${utils.getISODateString(new Date(shiftBoundaries.start))}`)
-        const endShiftContainer = document.querySelector(`.shiftContainer.Date-${utils.getISODateString(new Date(shiftBoundaries.end))}`)
+        const startShiftContainer = document.querySelector(`.shiftContainer.Date-${utils.getISODateString(shiftBoundaries.start)}`)
+        const endShiftContainer = document.querySelector(`.shiftContainer.Date-${utils.getISODateString(shiftBoundaries.end)}`)
 
         selectedMemberOptions.forEach(option => {
             const shift = document.createElement("div")

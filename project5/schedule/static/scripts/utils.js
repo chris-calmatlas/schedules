@@ -1,5 +1,5 @@
 export const getDuration = function(startDateObject, endDateObject){
-    const dateDiff = Math.max(0, endDateObject - startDateObject)
+    const dateDiff = Math.max(0, endDateObject.getTime() - startDateObject.getTime())
 
     const epochTimes = {
         "years": 31536000000,
